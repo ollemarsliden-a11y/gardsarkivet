@@ -36,6 +36,18 @@ Deno.serve(async (req) => {
     const { action, key, contentType } = await req.json();
     if (!key || key.includes('..')) return json({ error: 'Ogiltig nyckel' }, 400);
 
+    if (action === 'delete') {
+      // Radering sker direkt härifrån (server till server) – ingen CORS inblandad
+      const res = await r2.fetch(`${endpoint}/${bucket}/${key}`, {
+        method: 'DELETE',
+        aws: { service: 's3', region: 'auto' },
+      });
+      if (!res.ok && res.status !== 404) {
+        return json({ error: 'Lagringen svarade ' + res.status }, 500);
+      }
+      return json({ ok: true });
+    }
+
     const url = new URL(`${endpoint}/${bucket}/${key}`);
     url.searchParams.set('X-Amz-Expires', '600'); // giltig i 10 minuter
 

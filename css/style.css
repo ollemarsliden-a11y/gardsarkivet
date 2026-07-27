@@ -101,6 +101,17 @@ dialog::backdrop { background: rgba(0,0,0,0.4); }
 dialog form { display: flex; flex-direction: column; gap: 0.6rem; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.5rem; }
 
+/* Google-knapp och skanning */
+.login-divider { margin: 1rem 0 0.75rem; color: var(--muted); font-size: 0.9rem; }
+.btn-google { display: inline-flex; align-items: center; gap: 0.5rem; width: 100%; justify-content: center; }
+.big-actions { display: flex; flex-direction: column; gap: 0.5rem; margin: 1rem 0; }
+.big-actions .btn-big { margin: 0; }
+.scan-box { display: flex; flex-direction: column; gap: 0.75rem; }
+.scan-preview { max-width: 100%; max-height: 55vh; object-fit: contain; border: 1px solid var(--border); border-radius: 8px; align-self: center; }
+.doc-actions { flex-wrap: wrap; align-items: center; }
+.doc-actions .cat-move { width: auto; padding: 0.5rem; font-size: 0.85rem; }
+.btn-danger { color: var(--danger); border-color: var(--danger); }
+
 .status { padding: 0.6rem; border-radius: 8px; background: #eef3ee; border: 1px solid var(--green); }
 .status.error { background: #f7ebe9; border-color: var(--danger); color: var(--danger); }
 .hint { font-size: 0.85rem; color: var(--muted); }

@@ -71,6 +71,27 @@ i listan och går att öppna.
 Skapa ett GitHub-repo, pusha, slå på GitHub Pages. Lägg till Pages-adressen i
 R2-bucketens CORS-policy och i Supabase: Authentication → URL Configuration → Site URL.
 
+## Google-inloggning (valfritt men bekvämt)
+
+1. Gå till [console.cloud.google.com](https://console.cloud.google.com) (vanligt Google-konto räcker)
+   → skapa ett projekt, t.ex. "Gardsarkivet".
+2. **APIs & Services → OAuth consent screen:** välj External, fyll i appnamn
+   ("Gårdsarkivet") och din e-post. Spara igenom stegen och tryck **Publish app**.
+3. **APIs & Services → Credentials → Create credentials → OAuth client ID:**
+   - Application type: **Web application**
+   - Authorized redirect URIs: `https://vnaqunoqgijnxhipjitl.supabase.co/auth/v1/callback`
+4. Kopiera **Client ID** och **Client secret** till Supabase:
+   **Authentication → Sign In / Up → Google** → slå på, klistra in båda, spara.
+5. Viktigt: bjud in släktingar med **samma adress som deras Google-konto** –
+   då kopplas Google-inloggningen automatiskt till rätt konto. Registrering är
+   fortfarande avstängd, så okända Google-konton släpps inte in.
+
+## Radera och flytta
+
+- Alla inbjudna kan radera dokument (med bekräftelsefråga) och flytta dem
+  mellan kategorier. Kräver att `supabase/etapp2-uppdatering.sql` körts i SQL Editor.
+- Radering tar bort både filen i R2 (via edge-funktionen) och raden i databasen.
+
 ## Säkerhet i korthet
 
 - Registrering avstängd – endast inbjudna konton kan logga in.

@@ -53,6 +53,14 @@ $('login-form').addEventListener('submit', async (e) => {
   }
 });
 
+$('google-btn').addEventListener('click', async () => {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.href },
+  });
+  if (error) showStatus($('login-status'), 'Google-inloggningen misslyckades: ' + error.message, true);
+});
+
 $('logout-btn').addEventListener('click', () => supabase.auth.signOut());
 
 // ---------- Dokumentlista ----------
@@ -106,11 +114,39 @@ function renderDocuments(docs) {
 
     const actions = document.createElement('div');
     actions.className = 'doc-actions';
+
     const openBtn = document.createElement('button');
     openBtn.className = 'btn btn-primary';
     openBtn.textContent = 'Öppna';
     openBtn.addEventListener('click', () => openDocument(doc, openBtn));
-    actions.append(openBtn);
+
+    const moveSel = document.createElement('select');
+    moveSel.className = 'cat-move';
+    moveSel.title = 'Flytta till annan kategori';
+    for (const [value, name] of Object.entries(CATEGORY_NAMES)) {
+      const opt = document.createElement('option');
+      opt.value = value;
+      opt.textContent = name;
+      opt.selected = value === doc.category;
+      moveSel.append(opt);
+    }
+    moveSel.addEventListener('change', async () => {
+      const { error } = await supabase.from('documents')
+        .update({ category: moveSel.value }).eq('id', doc.id);
+      if (error) {
+        alert('Kunde inte flytta: ' + error.message);
+        moveSel.value = doc.category;
+      } else {
+        loadDocuments();
+      }
+    });
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-danger';
+    delBtn.textContent = '✕ Radera';
+    delBtn.addEventListener('click', () => deleteDocument(doc, delBtn));
+
+    actions.append(openBtn, moveSel, delBtn);
     card.append(actions);
 
     list.append(card);
@@ -134,6 +170,26 @@ async function openDocument(doc, btn) {
   }
 }
 
+async function deleteDocument(doc, btn) {
+  if (!confirm(`Radera "${doc.title}"? Detta går inte att ångra.`)) return;
+  btn.disabled = true;
+  btn.textContent = 'Raderar…';
+  try {
+    // Ta bort filen ur lagringen (görs på servern), sedan raden i databasen
+    const { error } = await supabase.functions.invoke('r2', {
+      body: { action: 'delete', key: doc.file_key },
+    });
+    if (error) throw error;
+    const { error: dbError } = await supabase.from('documents').delete().eq('id', doc.id);
+    if (dbError) throw dbError;
+    loadDocuments();
+  } catch (err) {
+    alert('Kunde inte radera: ' + (err.message ?? err));
+    btn.disabled = false;
+    btn.textContent = '✕ Radera';
+  }
+}
+
 // ---------- Kategorifilter ----------
 
 $('category-nav').addEventListener('click', (e) => {
@@ -144,20 +200,123 @@ $('category-nav').addEventListener('click', (e) => {
   loadDocuments();
 });
 
+// ---------- Skanning med kameran ----------
+
+let scanBlob = null;      // färdig PDF från skanningen, används av uppladdningen
+let scanSourceImg = null; // originalbilden, för "Ta om"-fritt omförsök utan kamera
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('Kunde inte ladda ' + src));
+    document.head.append(s);
+  });
+}
+
+let scanLibsPromise = null;
+function loadScanLibs() {
+  scanLibsPromise ??= (async () => {
+    // OpenCV är stor (~10 MB) – laddas bara första gången man skannar
+    await loadScript('https://docs.opencv.org/4.7.0/opencv.js');
+    if (!window.cv?.Mat) {
+      await new Promise((resolve) => { window.cv['onRuntimeInitialized'] = resolve; });
+    }
+    await loadScript('https://cdn.jsdelivr.net/npm/jscanify@1.4.0/src/jscanify.min.js');
+    await loadScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js');
+  })();
+  return scanLibsPromise;
+}
+
+$('scan-btn').addEventListener('click', () => $('scan-input').click());
+
+$('scan-input').addEventListener('change', async () => {
+  const file = $('scan-input').files[0];
+  if (!file) return;
+  $('scan-dialog').showModal();
+  $('scan-preview').hidden = true;
+  $('scan-retake-btn').hidden = true;
+  $('scan-accept-btn').hidden = true;
+  showStatus($('scan-status'), 'Bearbetar bilden – första gången kan det ta en liten stund…');
+  try {
+    await loadScanLibs();
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
+    scanSourceImg = img;
+    renderScan(img);
+  } catch (err) {
+    showStatus($('scan-status'), 'Fel vid bearbetning: ' + (err.message ?? err), true);
+  }
+  $('scan-input').value = '';
+});
+
+function renderScan(img) {
+  // Hitta pappret och räta upp det till A4-proportioner (150 dpi)
+  const W = 1240, H = 1754;
+  let source;
+  try {
+    const scanner = new jscanify();
+    source = scanner.extractPaper(img, W, H);
+  } catch {
+    source = img; // hittade inga papperskanter – använd hela bilden
+  }
+  const canvas = $('scan-preview');
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  // Svartvitt med uppskruvad kontrast – som en riktig skanner
+  ctx.filter = 'grayscale(1) contrast(1.5) brightness(1.08)';
+  ctx.drawImage(source, 0, 0, W, H);
+  ctx.filter = 'none';
+  canvas.hidden = false;
+  showStatus($('scan-status'), 'Kolla att texten är läsbar. Blev det fel – ta om bilden med mer ljus och rakare vinkel.');
+  $('scan-retake-btn').hidden = false;
+  $('scan-accept-btn').hidden = false;
+}
+
+$('scan-cancel-btn').addEventListener('click', () => $('scan-dialog').close());
+$('scan-retake-btn').addEventListener('click', () => {
+  $('scan-dialog').close();
+  $('scan-input').click();
+});
+
+$('scan-accept-btn').addEventListener('click', () => {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+  pdf.addImage($('scan-preview').toDataURL('image/jpeg', 0.85), 'JPEG', 0, 0, 210, 297);
+  scanBlob = pdf.output('blob');
+  $('scan-dialog').close();
+  openUploadDialog(true);
+});
+
 // ---------- Uppladdning ----------
 
-$('upload-open-btn').addEventListener('click', () => {
+function openUploadDialog(fromScan) {
+  if (!fromScan) scanBlob = null;
   $('upload-form').reset();
   if (currentCategory !== 'alla') $('cat-input').value = currentCategory;
-  $('upload-status').hidden = true;
+  $('file-input').required = !scanBlob;
+  $('file-input').style.display = scanBlob ? 'none' : '';
+  document.querySelector('label[for="file-input"]').style.display = scanBlob ? 'none' : '';
+  if (scanBlob) {
+    showStatus($('upload-status'), 'Skannad PDF redo – ge den ett namn och välj kategori.');
+  } else {
+    $('upload-status').hidden = true;
+  }
   $('upload-dialog').showModal();
-});
+}
+
+$('upload-open-btn').addEventListener('click', () => openUploadDialog(false));
 
 $('upload-cancel-btn').addEventListener('click', () => $('upload-dialog').close());
 
 $('upload-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const file = $('file-input').files[0];
+  const file = scanBlob
+    ? new File([scanBlob], 'skanning.pdf', { type: 'application/pdf' })
+    : $('file-input').files[0];
   if (!file) return;
   const submitBtn = $('upload-submit-btn');
   submitBtn.disabled = true;
@@ -203,6 +362,7 @@ $('upload-form').addEventListener('submit', async (e) => {
     });
     if (dbError) throw new Error('steg 3, databasen: ' + dbError.message);
 
+    scanBlob = null;
     $('upload-dialog').close();
     loadDocuments();
   } catch (err) {
