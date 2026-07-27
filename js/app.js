@@ -274,12 +274,30 @@ function renderScan(img) {
   if (scanMode === 'doc') {
     // Hitta pappret och räta upp det till A4-proportioner (150 dpi)
     const W = 1240, H = 1754;
-    let source;
+    let source = img;
     try {
       const scanner = new jscanify();
-      source = scanner.extractPaper(img, W, H);
+      const srcCanvas = document.createElement('canvas');
+      srcCanvas.width = img.width;
+      srcCanvas.height = img.height;
+      srcCanvas.getContext('2d').drawImage(img, 0, 0);
+      const mat = cv.imread(srcCanvas);
+      const contour = scanner.findPaperContour(mat);
+      mat.delete();
+      if (contour) {
+        const c = scanner.getCornerPoints(contour);
+        // Rimlighetskontroll: den funna "pappersytan" måste täcka en ordentlig
+        // del av bilden – annars har detekteringen låst sig på t.ex. en bokstav
+        // och resultatet blir en hårt inzoomad felbeskärning.
+        const quadArea = 0.5 * Math.abs(
+          (c.topRightCorner.x - c.bottomLeftCorner.x) * (c.bottomRightCorner.y - c.topLeftCorner.y) -
+          (c.bottomRightCorner.x - c.topLeftCorner.x) * (c.topRightCorner.y - c.bottomLeftCorner.y));
+        if (quadArea > 0.25 * img.width * img.height) {
+          source = scanner.extractPaper(img, W, H, c);
+        }
+      }
     } catch {
-      source = img; // hittade inga papperskanter – använd hela bilden
+      source = img; // detekteringen kraschade – använd hela bilden
     }
     canvas.width = W;
     canvas.height = H;
