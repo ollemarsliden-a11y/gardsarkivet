@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#3d5a3c">
+  <title>Gårdsarkivet</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Inloggningsvy -->
+  <section id="login-view" class="view">
+    <div class="login-box">
+      <h1>🏡 Gårdsarkivet</h1>
+      <p>Gemensamt arkiv för fastighetens dokument och släktens foton.</p>
+      <form id="login-form">
+        <label for="email">Din e-postadress</label>
+        <input type="email" id="email" placeholder="namn@exempel.se" required autocomplete="email">
+        <button type="submit" class="btn btn-primary">Skicka inloggningslänk</button>
+      </form>
+      <p id="login-status" class="status" hidden></p>
+      <p class="hint">Du får ett mejl med en länk – klicka på den så är du inloggad. Inget lösenord behövs. Endast inbjudna släktingar kan logga in.</p>
+    </div>
+  </section>
+
+  <!-- Huvudvy -->
+  <section id="main-view" class="view" hidden>
+    <header>
+      <h1>🏡 Gårdsarkivet</h1>
+      <div class="header-actions">
+        <span id="user-email" class="user-email"></span>
+        <button id="logout-btn" class="btn btn-small">Logga ut</button>
+      </div>
+    </header>
+
+    <nav id="category-nav" class="category-nav">
+      <button class="cat-btn active" data-cat="alla">Alla</button>
+      <button class="cat-btn" data-cat="kopekontrakt">Köpekontrakt</button>
+      <button class="cat-btn" data-cat="servitut">Servitut</button>
+      <button class="cat-btn" data-cat="gavobrev">Gåvobrev</button>
+      <button class="cat-btn" data-cat="avtal">Avtal</button>
+      <button class="cat-btn" data-cat="foton">Foton</button>
+      <button class="cat-btn" data-cat="ovrigt">Övrigt</button>
+    </nav>
+
+    <button id="upload-open-btn" class="btn btn-primary btn-big">+ Ladda upp dokument eller foto</button>
+
+    <div id="doc-list" class="doc-list">
+      <p class="empty-msg">Laddar…</p>
+    </div>
+  </section>
+
+  <!-- Uppladdningsdialog -->
+  <dialog id="upload-dialog">
+    <form id="upload-form">
+      <h2>Ladda upp</h2>
+      <label for="file-input">Välj fil (PDF eller bild)</label>
+      <input type="file" id="file-input" accept="application/pdf,image/*" required>
+      <label for="title-input">Namn på dokumentet</label>
+      <input type="text" id="title-input" placeholder="t.ex. Köpekontrakt 1962" required maxlength="120">
+      <label for="cat-input">Kategori</label>
+      <select id="cat-input" required>
+        <option value="kopekontrakt">Köpekontrakt</option>
+        <option value="servitut">Servitut</option>
+        <option value="gavobrev">Gåvobrev</option>
+        <option value="avtal">Avtal</option>
+        <option value="foton">Foton</option>
+        <option value="ovrigt" selected>Övrigt</option>
+      </select>
+      <label for="desc-input">Beskrivning (frivilligt)</label>
+      <textarea id="desc-input" rows="2" placeholder="t.ex. Servitut för vägen ner till sjön" maxlength="500"></textarea>
+      <p id="upload-status" class="status" hidden></p>
+      <div class="dialog-actions">
+        <button type="button" id="upload-cancel-btn" class="btn">Avbryt</button>
+        <button type="submit" id="upload-submit-btn" class="btn btn-primary">Ladda upp</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="js/app.js?v=2"></script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+:root {
+  --green: #3d5a3c;
+  --green-dark: #2c422b;
+  --bg: #f7f5f0;
+  --card: #ffffff;
+  --text: #2a2a26;
+  --muted: #6b6b62;
+  --border: #ddd8cc;
+  --danger: #a33c2f;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 18px; /* stor text – flera användare är äldre */
+  line-height: 1.5;
+}
+
+.view { max-width: 720px; margin: 0 auto; padding: 1rem; }
+
+h1 { font-size: 1.6rem; margin: 0.5rem 0; color: var(--green-dark); }
+
+/* Inloggning */
+.login-box {
+  margin-top: 10vh;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+.login-box form { display: flex; flex-direction: column; gap: 0.75rem; text-align: left; margin-top: 1rem; }
+
+/* Formulärelement */
+input, select, textarea {
+  font: inherit;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 100%;
+}
+label { font-weight: bold; font-size: 0.95rem; }
+
+/* Knappar – stora och tydliga */
+.btn {
+  font: inherit;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  cursor: pointer;
+}
+.btn-primary { background: var(--green); color: #fff; border-color: var(--green-dark); }
+.btn-primary:hover { background: var(--green-dark); }
+.btn-big { width: 100%; font-size: 1.15rem; padding: 1rem; margin: 1rem 0; }
+.btn-small { font-size: 0.85rem; padding: 0.4rem 0.75rem; }
+
+/* Header */
+header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+.header-actions { display: flex; align-items: center; gap: 0.75rem; }
+.user-email { font-size: 0.85rem; color: var(--muted); }
+
+/* Kategorier */
+.category-nav { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0; }
+.cat-btn {
+  font: inherit; font-size: 0.9rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  cursor: pointer;
+}
+.cat-btn.active { background: var(--green); color: #fff; border-color: var(--green-dark); }
+
+/* Dokumentlista */
+.doc-list { display: flex; flex-direction: column; gap: 0.75rem; }
+.doc-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+}
+.doc-card h3 { margin: 0 0 0.25rem; font-size: 1.1rem; }
+.doc-meta { font-size: 0.85rem; color: var(--muted); margin: 0 0 0.5rem; }
+.doc-desc { margin: 0 0 0.75rem; }
+.doc-actions { display: flex; gap: 0.5rem; }
+.empty-msg { text-align: center; color: var(--muted); padding: 2rem 0; }
+
+/* Dialog */
+dialog {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: min(480px, 92vw);
+}
+dialog::backdrop { background: rgba(0,0,0,0.4); }
+dialog form { display: flex; flex-direction: column; gap: 0.6rem; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.5rem; }
+
+.status { padding: 0.6rem; border-radius: 8px; background: #eef3ee; border: 1px solid var(--green); }
+.status.error { background: #f7ebe9; border-color: var(--danger); color: var(--danger); }
+.hint { font-size: 0.85rem; color: var(--muted); }
