@@ -1,0 +1,20 @@
+# Håller Supabase-gratisprojektet vaket genom ett litet anrop två gånger i veckan.
+# Utan detta pausas projektet efter ~1 veckas inaktivitet och appen slutar svara
+# tills någon manuellt väcker det i Supabase-dashboarden.
+name: Väck Supabase
+on:
+  schedule:
+    - cron: '17 6 * * 1,4' # måndag och torsdag 06:17 UTC
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping databasen
+        run: |
+          curl -sf "https://vnaqunoqgijnxhipjitl.supabase.co/rest/v1/documents?select=id&limit=1" \
+            -H "apikey: sb_publishable_ojqWGgID9RZ4E_esTad09w_MvICWZeE" \
+            -H "Authorization: Bearer sb_publishable_ojqWGgID9RZ4E_esTad09w_MvICWZeE" \
+            -o /dev/null
+          echo "Supabase svarade – projektet hålls vaket."
