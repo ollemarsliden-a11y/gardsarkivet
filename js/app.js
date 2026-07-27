@@ -11,6 +11,8 @@ const supabase = configured ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : nu
 
 const $ = (id) => document.getElementById(id);
 let currentCategory = 'alla';
+let currentDocs = [];
+let searchTerm = '';
 
 function showStatus(el, msg, isError = false) {
   el.textContent = msg;
@@ -78,8 +80,20 @@ async function loadDocuments() {
     list.appendChild(p);
     return;
   }
-  renderDocuments(data);
+  currentDocs = data;
+  renderDocuments(filteredDocs());
 }
+
+function filteredDocs() {
+  if (!searchTerm) return currentDocs;
+  return currentDocs.filter((doc) =>
+    (doc.title + ' ' + (doc.description ?? '')).toLowerCase().includes(searchTerm));
+}
+
+$('search-input').addEventListener('input', () => {
+  searchTerm = $('search-input').value.trim().toLowerCase();
+  renderDocuments(filteredDocs());
+});
 
 function renderDocuments(docs) {
   const list = $('doc-list');
@@ -202,8 +216,9 @@ $('category-nav').addEventListener('click', (e) => {
 
 // ---------- Skanning med kameran ----------
 
-let scanBlob = null;      // färdig PDF från skanningen, används av uppladdningen
-let scanSourceImg = null; // originalbilden, för "Ta om"-fritt omförsök utan kamera
+let scanResult = null;    // { blob, filename, mime, kategori } – används av uppladdningen
+let scanSourceImg = null; // originalbilden, så att man kan växla läge utan ny bild
+let scanMode = 'doc';     // 'doc' = svartvit A4-PDF, 'photo' = färgfoto i JPEG
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -253,27 +268,47 @@ $('scan-input').addEventListener('change', async () => {
 });
 
 function renderScan(img) {
-  // Hitta pappret och räta upp det till A4-proportioner (150 dpi)
-  const W = 1240, H = 1754;
-  let source;
-  try {
-    const scanner = new jscanify();
-    source = scanner.extractPaper(img, W, H);
-  } catch {
-    source = img; // hittade inga papperskanter – använd hela bilden
-  }
   const canvas = $('scan-preview');
-  canvas.width = W;
-  canvas.height = H;
   const ctx = canvas.getContext('2d');
-  // Svartvitt med uppskruvad kontrast – som en riktig skanner
-  ctx.filter = 'grayscale(1) contrast(1.5) brightness(1.08)';
-  ctx.drawImage(source, 0, 0, W, H);
-  ctx.filter = 'none';
+
+  if (scanMode === 'doc') {
+    // Hitta pappret och räta upp det till A4-proportioner (150 dpi)
+    const W = 1240, H = 1754;
+    let source;
+    try {
+      const scanner = new jscanify();
+      source = scanner.extractPaper(img, W, H);
+    } catch {
+      source = img; // hittade inga papperskanter – använd hela bilden
+    }
+    canvas.width = W;
+    canvas.height = H;
+    // Svartvitt med uppskruvad kontrast – som en riktig skanner
+    ctx.filter = 'grayscale(1) contrast(1.5) brightness(1.08)';
+    ctx.drawImage(source, 0, 0, W, H);
+    ctx.filter = 'none';
+    showStatus($('scan-status'), 'Kolla att texten är läsbar. Blev det fel – ta om bilden med mer ljus och rakare vinkel.');
+  } else {
+    // Fotoläge: behåll färg och proportioner, skala bara ner om enorm
+    const scale = Math.min(1, 2000 / Math.max(img.width, img.height));
+    canvas.width = Math.round(img.width * scale);
+    canvas.height = Math.round(img.height * scale);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    showStatus($('scan-status'), 'Fotot sparas i färg precis som det ser ut här. Fota rakt ovanifrån och fyll så mycket av rutan som möjligt.');
+  }
+
   canvas.hidden = false;
-  showStatus($('scan-status'), 'Kolla att texten är läsbar. Blev det fel – ta om bilden med mer ljus och rakare vinkel.');
   $('scan-retake-btn').hidden = false;
   $('scan-accept-btn').hidden = false;
+}
+
+for (const [btnId, mode] of [['mode-doc-btn', 'doc'], ['mode-photo-btn', 'photo']]) {
+  $(btnId).addEventListener('click', () => {
+    scanMode = mode;
+    $('mode-doc-btn').classList.toggle('active', mode === 'doc');
+    $('mode-photo-btn').classList.toggle('active', mode === 'photo');
+    if (scanSourceImg) renderScan(scanSourceImg);
+  });
 }
 
 $('scan-cancel-btn').addEventListener('click', () => $('scan-dialog').close());
@@ -283,25 +318,37 @@ $('scan-retake-btn').addEventListener('click', () => {
 });
 
 $('scan-accept-btn').addEventListener('click', () => {
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
-  pdf.addImage($('scan-preview').toDataURL('image/jpeg', 0.85), 'JPEG', 0, 0, 210, 297);
-  scanBlob = pdf.output('blob');
-  $('scan-dialog').close();
-  openUploadDialog(true);
+  const canvas = $('scan-preview');
+  if (scanMode === 'doc') {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.85), 'JPEG', 0, 0, 210, 297);
+    scanResult = { blob: pdf.output('blob'), filename: 'skanning.pdf', mime: 'application/pdf', kategori: null };
+    $('scan-dialog').close();
+    openUploadDialog(true);
+  } else {
+    canvas.toBlob((blob) => {
+      scanResult = { blob, filename: 'foto.jpg', mime: 'image/jpeg', kategori: 'foton' };
+      $('scan-dialog').close();
+      openUploadDialog(true);
+    }, 'image/jpeg', 0.92);
+  }
 });
 
 // ---------- Uppladdning ----------
 
 function openUploadDialog(fromScan) {
-  if (!fromScan) scanBlob = null;
+  if (!fromScan) scanResult = null;
   $('upload-form').reset();
   if (currentCategory !== 'alla') $('cat-input').value = currentCategory;
-  $('file-input').required = !scanBlob;
-  $('file-input').style.display = scanBlob ? 'none' : '';
-  document.querySelector('label[for="file-input"]').style.display = scanBlob ? 'none' : '';
-  if (scanBlob) {
-    showStatus($('upload-status'), 'Skannad PDF redo – ge den ett namn och välj kategori.');
+  if (scanResult?.kategori) $('cat-input').value = scanResult.kategori;
+  $('file-input').required = !scanResult;
+  $('file-input').style.display = scanResult ? 'none' : '';
+  document.querySelector('label[for="file-input"]').style.display = scanResult ? 'none' : '';
+  if (scanResult) {
+    showStatus($('upload-status'), scanResult.mime === 'application/pdf'
+      ? 'Skannad PDF redo – ge den ett namn och välj kategori.'
+      : 'Inskannat foto redo – ge det ett namn.');
   } else {
     $('upload-status').hidden = true;
   }
@@ -314,8 +361,8 @@ $('upload-cancel-btn').addEventListener('click', () => $('upload-dialog').close(
 
 $('upload-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const file = scanBlob
-    ? new File([scanBlob], 'skanning.pdf', { type: 'application/pdf' })
+  const file = scanResult
+    ? new File([scanResult.blob], scanResult.filename, { type: scanResult.mime })
     : $('file-input').files[0];
   if (!file) return;
   const submitBtn = $('upload-submit-btn');
@@ -362,7 +409,7 @@ $('upload-form').addEventListener('submit', async (e) => {
     });
     if (dbError) throw new Error('steg 3, databasen: ' + dbError.message);
 
-    scanBlob = null;
+    scanResult = null;
     $('upload-dialog').close();
     loadDocuments();
   } catch (err) {

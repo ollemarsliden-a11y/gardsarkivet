@@ -1,117 +1,211 @@
+/* Marsliden 1:10 – design: "modern lantmäterihandling".
+   Kulör från Kultsjön: djup sjöblå, isblå bakgrund, vita kort.
+   Display: Bricolage Grotesque (wordmark/rubriker), brödtext: systemsans. */
+
 :root {
-  --green: #3d5a3c;
-  --green-dark: #2c422b;
-  --bg: #f7f5f0;
-  --card: #ffffff;
-  --text: #2a2a26;
-  --muted: #6b6b62;
-  --border: #ddd8cc;
-  --danger: #a33c2f;
+  --fjall: #14293d;      /* djup sjöblå – text, header */
+  --sjo: #1d5b8f;        /* primär blå – knappar, aktiva val */
+  --sjo-mork: #154568;
+  --is: #eef3f7;         /* isblå bakgrund */
+  --kort: #ffffff;
+  --dis: #5b7286;        /* dämpad text */
+  --ram: #d4dfe8;        /* kantlinjer */
+  --varning: #a93c2c;
+  --fokus: #2e7cc0;
 }
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  font-family: Georgia, 'Times New Roman', serif;
-  background: var(--bg);
-  color: var(--text);
-  font-size: 18px; /* stor text – flera användare är äldre */
-  line-height: 1.5;
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  background: var(--is);
+  color: var(--fjall);
+  font-size: 17px; /* stor text – flera användare är äldre */
+  line-height: 1.55;
 }
 
 .view { max-width: 720px; margin: 0 auto; padding: 1rem; }
 
-h1 { font-size: 1.6rem; margin: 0.5rem 0; color: var(--green-dark); }
+/* Wordmark – "fastighetsplattan" */
+.wordmark {
+  font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--fjall);
+  text-transform: uppercase;
+  margin: 0;
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+.wordmark .beteckning { color: var(--sjo); }
+.tagline {
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dis);
+  margin: 0.15rem 0 0;
+}
 
 /* Inloggning */
 .login-box {
-  margin-top: 10vh;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 2rem 1.5rem;
+  margin-top: 8vh;
+  background: var(--kort);
+  border: 1px solid var(--ram);
+  border-top: 4px solid var(--sjo);
+  border-radius: 14px;
+  padding: 2.25rem 1.75rem;
   text-align: center;
 }
-.login-box form { display: flex; flex-direction: column; gap: 0.75rem; text-align: left; margin-top: 1rem; }
+.login-box .wordmark { font-size: 1.7rem; }
+.login-box form { display: flex; flex-direction: column; gap: 0.75rem; text-align: left; margin-top: 1.5rem; }
+.login-divider {
+  display: flex; align-items: center; gap: 0.75rem;
+  margin: 1.25rem 0 0.9rem; color: var(--dis); font-size: 0.85rem;
+}
+.login-divider::before, .login-divider::after {
+  content: ''; flex: 1; border-top: 1px solid var(--ram);
+}
 
 /* Formulärelement */
 input, select, textarea {
   font: inherit;
   padding: 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border: 1px solid var(--ram);
+  border-radius: 9px;
   width: 100%;
+  background: var(--kort);
+  color: inherit;
 }
-label { font-weight: bold; font-size: 0.95rem; }
+input:focus-visible, select:focus-visible, textarea:focus-visible,
+.btn:focus-visible, .cat-btn:focus-visible {
+  outline: 3px solid var(--fokus);
+  outline-offset: 1px;
+}
+label { font-weight: 600; font-size: 0.9rem; }
 
 /* Knappar – stora och tydliga */
 .btn {
   font: inherit;
+  font-weight: 600;
   padding: 0.75rem 1.25rem;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--card);
+  border-radius: 9px;
+  border: 1px solid var(--ram);
+  background: var(--kort);
+  color: var(--fjall);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
 }
-.btn-primary { background: var(--green); color: #fff; border-color: var(--green-dark); }
-.btn-primary:hover { background: var(--green-dark); }
-.btn-big { width: 100%; font-size: 1.15rem; padding: 1rem; margin: 1rem 0; }
-.btn-small { font-size: 0.85rem; padding: 0.4rem 0.75rem; }
+.btn:hover { border-color: var(--sjo); }
+.btn-primary { background: var(--sjo); color: #fff; border-color: var(--sjo-mork); }
+.btn-primary:hover { background: var(--sjo-mork); }
+.btn-big { width: 100%; font-size: 1.1rem; padding: 1rem; }
+.btn-small { font-size: 0.85rem; padding: 0.45rem 0.8rem; }
+.btn-danger { color: var(--varning); }
+.btn-danger:hover { border-color: var(--varning); }
+.btn-google { width: 100%; }
+.btn .ikon { flex: none; }
 
 /* Header */
-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+header {
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 0.5rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 2px solid var(--fjall);
+  margin-bottom: 0.9rem;
+  position: relative;
+}
+header::after {
+  /* sjöhorisonten: en tunn andra linje under den grova */
+  content: '';
+  position: absolute; left: 0; right: 0; bottom: -5px;
+  border-top: 1px solid var(--ram);
+}
 .header-actions { display: flex; align-items: center; gap: 0.75rem; }
-.user-email { font-size: 0.85rem; color: var(--muted); }
+.user-email { font-size: 0.8rem; color: var(--dis); }
 
-/* Kategorier */
-.category-nav { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0; }
+/* Sök */
+.search-row { margin: 0.9rem 0 0.6rem; position: relative; }
+.search-row .ikon {
+  position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%);
+  color: var(--dis); pointer-events: none;
+}
+#search-input { padding-left: 2.6rem; }
+
+/* Kategorier – kartlegend */
+.category-nav { display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 0.6rem 0 0.9rem; }
 .cat-btn {
-  font: inherit; font-size: 0.9rem;
-  padding: 0.5rem 0.9rem;
+  font: inherit; font-size: 0.88rem; font-weight: 600;
+  padding: 0.5rem 0.95rem;
   border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--card);
+  border: 1px solid var(--ram);
+  background: var(--kort);
+  color: var(--fjall);
   cursor: pointer;
 }
-.cat-btn.active { background: var(--green); color: #fff; border-color: var(--green-dark); }
+.cat-btn:hover { border-color: var(--sjo); }
+.cat-btn.active { background: var(--fjall); color: #fff; border-color: var(--fjall); }
+
+/* Stora åtgärdsknappar */
+.big-actions { display: flex; flex-direction: column; gap: 0.55rem; margin: 0.9rem 0 1.1rem; }
+.big-actions .btn-big { margin: 0; }
 
 /* Dokumentlista */
-.doc-list { display: flex; flex-direction: column; gap: 0.75rem; }
+.doc-list { display: flex; flex-direction: column; gap: 0.7rem; }
 .doc-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 1rem;
+  background: var(--kort);
+  border: 1px solid var(--ram);
+  border-left: 4px solid var(--sjo);
+  border-radius: 11px;
+  padding: 1rem 1.1rem;
 }
-.doc-card h3 { margin: 0 0 0.25rem; font-size: 1.1rem; }
-.doc-meta { font-size: 0.85rem; color: var(--muted); margin: 0 0 0.5rem; }
-.doc-desc { margin: 0 0 0.75rem; }
-.doc-actions { display: flex; gap: 0.5rem; }
-.empty-msg { text-align: center; color: var(--muted); padding: 2rem 0; }
+.doc-card h3 { margin: 0 0 0.2rem; font-size: 1.08rem; font-weight: 650; }
+.doc-meta { font-size: 0.8rem; color: var(--dis); margin: 0 0 0.45rem; letter-spacing: 0.02em; }
+.doc-desc { margin: 0 0 0.7rem; font-size: 0.95rem; }
+.doc-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+.doc-actions .cat-move { width: auto; padding: 0.55rem; font-size: 0.85rem; }
+.empty-msg { text-align: center; color: var(--dis); padding: 2.5rem 0; }
 
-/* Dialog */
+/* Dialoger */
 dialog {
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  border: 1px solid var(--ram);
+  border-top: 4px solid var(--sjo);
+  border-radius: 14px;
   padding: 1.5rem;
-  width: min(480px, 92vw);
+  width: min(500px, 92vw);
+  color: var(--fjall);
 }
-dialog::backdrop { background: rgba(0,0,0,0.4); }
+dialog::backdrop { background: rgba(20, 41, 61, 0.55); }
 dialog form { display: flex; flex-direction: column; gap: 0.6rem; }
-.dialog-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.5rem; }
+dialog h2 {
+  font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+  font-size: 1.25rem; margin: 0 0 0.25rem;
+}
+.dialog-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap; }
 
-/* Google-knapp och skanning */
-.login-divider { margin: 1rem 0 0.75rem; color: var(--muted); font-size: 0.9rem; }
-.btn-google { display: inline-flex; align-items: center; gap: 0.5rem; width: 100%; justify-content: center; }
-.big-actions { display: flex; flex-direction: column; gap: 0.5rem; margin: 1rem 0; }
-.big-actions .btn-big { margin: 0; }
+/* Skanning */
 .scan-box { display: flex; flex-direction: column; gap: 0.75rem; }
-.scan-preview { max-width: 100%; max-height: 55vh; object-fit: contain; border: 1px solid var(--border); border-radius: 8px; align-self: center; }
-.doc-actions { flex-wrap: wrap; align-items: center; }
-.doc-actions .cat-move { width: auto; padding: 0.5rem; font-size: 0.85rem; }
-.btn-danger { color: var(--danger); border-color: var(--danger); }
+.scan-mode { display: flex; gap: 0.45rem; }
+.scan-mode .btn { flex: 1; }
+.scan-mode .btn.active { background: var(--fjall); color: #fff; border-color: var(--fjall); }
+.scan-preview {
+  max-width: 100%; max-height: 52vh; object-fit: contain;
+  border: 1px solid var(--ram); border-radius: 9px; align-self: center;
+}
 
-.status { padding: 0.6rem; border-radius: 8px; background: #eef3ee; border: 1px solid var(--green); }
-.status.error { background: #f7ebe9; border-color: var(--danger); color: var(--danger); }
-.hint { font-size: 0.85rem; color: var(--muted); }
+/* Status */
+.status {
+  padding: 0.65rem 0.8rem; border-radius: 9px;
+  background: #e7eef5; border: 1px solid var(--sjo);
+  font-size: 0.92rem;
+}
+.status.error { background: #f7ebe8; border-color: var(--varning); color: var(--varning); }
+.hint { font-size: 0.83rem; color: var(--dis); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .doc-card { transition: border-color 120ms ease; }
+  .doc-card:hover { border-color: var(--sjo); }
+}
