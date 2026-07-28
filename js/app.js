@@ -267,52 +267,72 @@ $('scan-input').addEventListener('change', async () => {
   $('scan-input').value = '';
 });
 
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+// Hittar papperets/fotots hörn i bilden. Returnerar null om inget rimligt
+// hittas – t.ex. när detekteringen låst sig på något litet (en bokstav) och
+// beskärningen skulle bli en hårt inzoomad felbeskärning.
+function detectPaper(img) {
+  try {
+    const scanner = new jscanify();
+    const srcCanvas = document.createElement('canvas');
+    srcCanvas.width = img.width;
+    srcCanvas.height = img.height;
+    srcCanvas.getContext('2d').drawImage(img, 0, 0);
+    const mat = cv.imread(srcCanvas);
+    const contour = scanner.findPaperContour(mat);
+    mat.delete();
+    if (!contour) return null;
+    const corners = scanner.getCornerPoints(contour);
+    const quadArea = 0.5 * Math.abs(
+      (corners.topRightCorner.x - corners.bottomLeftCorner.x) * (corners.bottomRightCorner.y - corners.topLeftCorner.y) -
+      (corners.bottomRightCorner.x - corners.topLeftCorner.x) * (corners.topRightCorner.y - corners.bottomLeftCorner.y));
+    if (quadArea < 0.06 * img.width * img.height) return null;
+    return { corners };
+  } catch {
+    return null;
+  }
+}
+
 function renderScan(img) {
   const canvas = $('scan-preview');
   const ctx = canvas.getContext('2d');
 
+  const detected = detectPaper(img);
+
   if (scanMode === 'doc') {
-    // Hitta pappret och räta upp det till A4-proportioner (150 dpi)
+    // Räta upp till A4-proportioner (150 dpi), svartvitt med hög kontrast
     const W = 1240, H = 1754;
-    let source = img;
-    try {
-      const scanner = new jscanify();
-      const srcCanvas = document.createElement('canvas');
-      srcCanvas.width = img.width;
-      srcCanvas.height = img.height;
-      srcCanvas.getContext('2d').drawImage(img, 0, 0);
-      const mat = cv.imread(srcCanvas);
-      const contour = scanner.findPaperContour(mat);
-      mat.delete();
-      if (contour) {
-        const c = scanner.getCornerPoints(contour);
-        // Rimlighetskontroll: den funna "pappersytan" måste täcka en ordentlig
-        // del av bilden – annars har detekteringen låst sig på t.ex. en bokstav
-        // och resultatet blir en hårt inzoomad felbeskärning.
-        const quadArea = 0.5 * Math.abs(
-          (c.topRightCorner.x - c.bottomLeftCorner.x) * (c.bottomRightCorner.y - c.topLeftCorner.y) -
-          (c.bottomRightCorner.x - c.topLeftCorner.x) * (c.topRightCorner.y - c.bottomLeftCorner.y));
-        if (quadArea > 0.25 * img.width * img.height) {
-          source = scanner.extractPaper(img, W, H, c);
-        }
-      }
-    } catch {
-      source = img; // detekteringen kraschade – använd hela bilden
-    }
+    const source = detected
+      ? new jscanify().extractPaper(img, W, H, detected.corners)
+      : img;
     canvas.width = W;
     canvas.height = H;
-    // Svartvitt med uppskruvad kontrast – som en riktig skanner
     ctx.filter = 'grayscale(1) contrast(1.5) brightness(1.08)';
     ctx.drawImage(source, 0, 0, W, H);
     ctx.filter = 'none';
-    showStatus($('scan-status'), 'Kolla att texten är läsbar. Blev det fel – ta om bilden med mer ljus och rakare vinkel.');
+    showStatus($('scan-status'), detected
+      ? 'Kolla att texten är läsbar. Blev det fel – ta om bilden med mer ljus och rakare vinkel.'
+      : 'Hittade inga tydliga papperskanter, så hela bilden används. Mörk bakgrund bakom pappret hjälper.');
   } else {
-    // Fotoläge: behåll färg och proportioner, skala bara ner om enorm
-    const scale = Math.min(1, 2000 / Math.max(img.width, img.height));
-    canvas.width = Math.round(img.width * scale);
-    canvas.height = Math.round(img.height * scale);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    showStatus($('scan-status'), 'Fotot sparas i färg precis som det ser ut här. Fota rakt ovanifrån och fyll så mycket av rutan som möjligt.');
+    // Fotoläge: samma kantbeskärning men i färg, och fotots egna proportioner
+    if (detected) {
+      const c = detected.corners;
+      const w = Math.round((dist(c.topLeftCorner, c.topRightCorner) + dist(c.bottomLeftCorner, c.bottomRightCorner)) / 2);
+      const h = Math.round((dist(c.topLeftCorner, c.bottomLeftCorner) + dist(c.topRightCorner, c.bottomRightCorner)) / 2);
+      const scale = Math.min(1, 2000 / Math.max(w, h));
+      canvas.width = Math.round(w * scale);
+      canvas.height = Math.round(h * scale);
+      const source = new jscanify().extractPaper(img, canvas.width, canvas.height, c);
+      ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+      showStatus($('scan-status'), 'Fotot är beskuret och sparas i färg. Ser kanterna fel ut – ta om mot en avvikande bakgrund.');
+    } else {
+      const scale = Math.min(1, 2000 / Math.max(img.width, img.height));
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      showStatus($('scan-status'), 'Hittade inga tydliga kanter, så hela bilden sparas som den är – i färg.');
+    }
   }
 
   canvas.hidden = false;
