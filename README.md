@@ -127,6 +127,19 @@ Administratörer ser knappen **Personer** i appens huvudvy och kan där:
 Behörigheten kontrolleras i edge-funktionen mot tabellen `app_admins`; att
 knappen döljs för andra är bara bekvämlighet, inte skyddet.
 
+## Kvittens och hjälptexter
+
+- **Kvittens vid första inloggningen:** en ruta som inte går att stänga med Esc
+  kräver att man kryssar i att man läst informationen innan arkivet visas.
+  Kvittensen sparas per person och version i tabellen `samtycken` (kräver
+  `supabase/etapp6-samtycke.sql`). Ändras informationstexten i sak höjs
+  `VILLKOR_VERSION` i `js/app.js`, så får alla kvittera på nytt.
+- **"Så här skannar du"** – kort instruktion under skanningsknappen.
+- **"Lägg appen på hemskärmen"** – instruktioner per plattform i sidfoten.
+  I Chrome och Edge visas dessutom en riktig installationsknapp; Safari saknar
+  det stödet och får instruktionerna. Länken döljs när appen redan körs
+  installerad.
+
 ## Säkerhet i korthet
 
 - Registrering avstängd – endast inbjudna konton kan logga in.

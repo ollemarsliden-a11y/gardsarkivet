@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="icon" href="icon-192.png">
-  <link rel="stylesheet" href="css/style.css?v=10">
+  <link rel="stylesheet" href="css/style.css?v=13">
 </head>
 <body>
   <!-- Inloggningsvy -->
@@ -93,15 +93,115 @@
       </button>
     </div>
     <input type="file" id="scan-input" accept="image/*" capture="environment" hidden>
+    <p class="hjalp-rad"><button type="button" id="hjalp-btn" class="lank-btn">Så här skannar du</button></p>
 
     <div id="doc-list" class="doc-list">
       <p class="empty-msg">Laddar…</p>
     </div>
 
     <footer class="app-footer">
+      <button id="installera-btn" class="lank-btn">Lägg appen på hemskärmen</button>
       <button id="info-btn-main" class="lank-btn">Så hanteras arkivet och dina uppgifter</button>
     </footer>
   </section>
+
+  <!-- Lägg appen på hemskärmen -->
+  <dialog id="installera-dialog">
+    <div class="info-box">
+      <h2>Lägg appen på hemskärmen</h2>
+      <p>Då får du en egen ikon precis som andra appar, och slipper leta upp
+        adressen varje gång. Ingenting laddas ner – det är samma app, bara
+        lättare att komma åt.</p>
+
+      <p id="installera-direkt-rad" hidden>
+        <button type="button" id="installera-direkt-btn" class="btn btn-primary">Installera appen nu</button>
+      </p>
+
+      <h3>På iPhone och iPad</h3>
+      <ol class="steg">
+        <li>Tryck på <strong>dela-ikonen</strong> i verktygsraden – fyrkanten med
+          en pil uppåt. Den sitter längst ner i Safari.</li>
+        <li>Bläddra nedåt i listan och välj <strong>Lägg till på hemskärmen</strong>.</li>
+        <li>Tryck på <strong>Lägg till</strong> uppe till höger.</li>
+      </ol>
+
+      <h3>På Android</h3>
+      <ol class="steg">
+        <li>Tryck på <strong>de tre prickarna</strong> uppe till höger i Chrome.</li>
+        <li>Välj <strong>Lägg till på startskärmen</strong> eller <strong>Installera app</strong>.</li>
+        <li>Bekräfta med <strong>Lägg till</strong>.</li>
+      </ol>
+
+      <h3>På dator</h3>
+      <p>I Chrome och Edge finns en liten installationssymbol till höger i
+        adressfältet. Klicka på den och välj <em>Installera</em>.</p>
+
+      <p class="hint">Hittar du inte menyvalet? Kontrollera att du använder Safari
+        på iPhone eller Chrome på Android – andra webbläsare saknar ibland
+        funktionen.</p>
+
+      <div class="dialog-actions">
+        <button type="button" id="installera-close-btn" class="btn btn-primary">Stäng</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Kort instruktion för skanningen -->
+  <dialog id="hjalp-dialog">
+    <div class="info-box">
+      <h2>Så här skannar du</h2>
+      <ol class="steg">
+        <li><strong>Lägg pappret på ett bord</strong> med jämnt ljus, gärna på ett
+          mörkare underlag. Då syns kanterna tydligare för appen.</li>
+        <li><strong>Fota rakt ovanifrån</strong> så att hela pappret får plats i bilden.
+          Det gör inget om det blir lite snett – det rättas i nästa steg.</li>
+        <li><strong>Dra i de fyra hörnen</strong> tills den gröna ramen följer papprets
+          kanter. Tryck sedan på <em>Beskär</em>.</li>
+        <li><strong>Titta på resultatet.</strong> Sitter ramen fel går du tillbaka med
+          <em>Justera hörnen</em>. Blev bilden dålig, tryck <em>Ta om</em>.</li>
+      </ol>
+
+      <h3>Dokument eller gammalt foto?</h3>
+      <p><strong>Dokument</strong> gör bilden svartvit med skarp text och sparar den som
+        PDF – för kontrakt, servitut och brev. <strong>Gammalt foto</strong> behåller
+        färgerna och fotots egna proportioner, och hamnar automatiskt bland Foton.</p>
+
+      <h3>Flera sidor</h3>
+      <p>Har dokumentet fler sidor trycker du <em>Lägg till sida</em> istället för
+        <em>Klar</em>. Kameran öppnas igen, och alla sidor hamnar i samma PDF.</p>
+
+      <h3>Om bilden blev svag</h3>
+      <p>Kryssa i <em>Förbättra skärpa och kontrast</em> så skärps texten och matta
+        foton får mer liv. Du ser skillnaden direkt och kan kryssa ur igen.</p>
+
+      <div class="dialog-actions">
+        <button type="button" id="hjalp-close-btn" class="btn btn-primary">Stäng</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Kvittens första gången man loggar in -->
+  <dialog id="consent-dialog">
+    <div class="scan-box">
+      <h2>Välkommen till arkivet</h2>
+      <p>Här samlas handlingar och foton som rör Marsliden 1:10. En del av dem
+        innehåller personuppgifter – namn och adresser i kontrakt och servitut,
+        och släktingar på gamla kort. Därför är arkivet stängt för utomstående.</p>
+      <p>Innan du börjar, läs igenom hur arkivet och dina uppgifter hanteras.
+        Det tar en minut och förklarar bland annat vad Google-inloggningen
+        faktiskt ger appen tillgång till.</p>
+      <button type="button" id="consent-read-btn" class="btn">Läs informationen</button>
+      <label class="sharpen-row">
+        <input type="checkbox" id="consent-check">
+        Jag har läst och förstått informationen
+      </label>
+      <p id="consent-status" class="status" hidden></p>
+      <div class="dialog-actions">
+        <button type="button" id="consent-logout-btn" class="lank-btn">Logga ut istället</button>
+        <button type="button" id="consent-ok-btn" class="btn btn-primary" disabled>Fortsätt till arkivet</button>
+      </div>
+    </div>
+  </dialog>
 
   <!-- Information om säkerhet och personuppgifter -->
   <dialog id="info-dialog">
@@ -251,6 +351,6 @@
     </div>
   </dialog>
 
-  <script type="module" src="js/app.js?v=14"></script>
+  <script type="module" src="js/app.js?v=17"></script>
 </body>
 </html>

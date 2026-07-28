@@ -301,7 +301,11 @@ dialog h2 {
 .app-footer {
   margin: 2.5rem 0 0.5rem; padding-top: 1.25rem;
   border-top: 1px solid var(--bjork); text-align: center;
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 0.5rem 1.5rem;
 }
+#installera-dialog { max-height: 85vh; overflow-y: auto; }
+#installera-direkt-rad { margin: 0.75rem 0 0; }
 
 /* Informationssidan */
 .info-box h3 {
@@ -312,6 +316,20 @@ dialog h2 {
 .info-box h3:first-of-type { margin-top: 0.85rem; }
 .info-box p { margin: 0 0 0.6rem; font-size: 0.95rem; }
 #info-dialog { max-height: 85vh; overflow-y: auto; }
+
+.hjalp-rad { margin: -1rem 0 1.5rem; text-align: center; }
+#hjalp-dialog { max-height: 85vh; overflow-y: auto; }
+.steg { margin: 0.5rem 0 0.25rem; padding-left: 1.35rem; }
+.steg li { margin-bottom: 0.55rem; font-size: 0.95rem; }
+.steg li::marker { color: var(--rost); font-weight: 700; }
+
+/* Kvittensrutan */
+#consent-dialog p { font-size: 0.95rem; margin: 0; }
+#consent-dialog .sharpen-row {
+  background: var(--sand); border: 1px solid var(--bjork);
+  border-radius: 14px; padding: 0.85rem 1rem; margin-top: 0.25rem;
+}
+#consent-dialog .dialog-actions { justify-content: space-between; align-items: center; }
 
 /* Status */
 .status {

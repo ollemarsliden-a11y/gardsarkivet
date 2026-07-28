@@ -36,6 +36,9 @@ async function init() {
   supabase.auth.onAuthStateChange((_event, session) => setView(session));
 }
 
+// Höjs när informationstexten ändras i sak – då får alla kvittera på nytt.
+const VILLKOR_VERSION = '2026-07';
+
 function setView(session) {
   $('login-view').hidden = !!session;
   $('main-view').hidden = !session;
@@ -43,8 +46,54 @@ function setView(session) {
     $('user-email').textContent = session.user.email;
     loadDocuments();
     visaAdminKnapp(session.user.email);
+    kravSamtycke(session.user);
   }
 }
+
+// ---------- Kvittens av informationen ----------
+
+async function kravSamtycke(user) {
+  const { data, error } = await supabase.from('samtycken')
+    .select('user_id').eq('user_id', user.id).eq('version', VILLKOR_VERSION).maybeSingle();
+  // Går det inte att läsa (t.ex. innan tabellen finns) hindrar vi ingen
+  if (error || data) return;
+
+  $('consent-check').checked = false;
+  $('consent-ok-btn').disabled = true;
+  $('consent-status').hidden = true;
+  $('consent-dialog').showModal();
+}
+
+// Rutan går inte att stänga med Esc – man ska ta ställning
+$('consent-dialog').addEventListener('cancel', (e) => e.preventDefault());
+
+$('consent-check').addEventListener('change', () => {
+  $('consent-ok-btn').disabled = !$('consent-check').checked;
+});
+
+$('consent-read-btn').addEventListener('click', () => $('info-dialog').showModal());
+
+$('consent-logout-btn').addEventListener('click', async () => {
+  $('consent-dialog').close();
+  await supabase.auth.signOut();
+});
+
+$('consent-ok-btn').addEventListener('click', async () => {
+  const btn = $('consent-ok-btn');
+  btn.disabled = true;
+  const { data: { user } } = await supabase.auth.getUser();
+  const { error } = await supabase.from('samtycken').insert({
+    user_id: user.id,
+    email: user.email,
+    version: VILLKOR_VERSION,
+  });
+  if (error) {
+    showStatus($('consent-status'), 'Kunde inte spara: ' + error.message, true);
+    btn.disabled = false;
+    return;
+  }
+  $('consent-dialog').close();
+});
 
 // Personer-knappen visas bara för administratörer. Att dölja den är bara
 // bekvämlighet – edge-funktionen kontrollerar behörigheten på riktigt.
@@ -81,6 +130,43 @@ for (const id of ['info-btn-login', 'info-btn-main']) {
   $(id).addEventListener('click', () => $('info-dialog').showModal());
 }
 $('info-close-btn').addEventListener('click', () => $('info-dialog').close());
+
+$('hjalp-btn').addEventListener('click', () => $('hjalp-dialog').showModal());
+$('hjalp-close-btn').addEventListener('click', () => $('hjalp-dialog').close());
+
+// ---------- Lägg appen på hemskärmen ----------
+
+let installPrompt = null;
+
+// Chrome/Edge erbjuder en riktig installationsknapp. Safari gör det inte –
+// där får instruktionerna i rutan duga.
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  installPrompt = e;
+  $('installera-direkt-rad').hidden = false;
+});
+
+// Körs appen redan från hemskärmen behövs ingen uppmaning
+if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) {
+  $('installera-btn').hidden = true;
+}
+
+$('installera-btn').addEventListener('click', () => $('installera-dialog').showModal());
+$('installera-close-btn').addEventListener('click', () => $('installera-dialog').close());
+
+$('installera-direkt-btn').addEventListener('click', async () => {
+  if (!installPrompt) return;
+  $('installera-dialog').close();
+  installPrompt.prompt();
+  await installPrompt.userChoice;
+  installPrompt = null;
+  $('installera-direkt-rad').hidden = true;
+});
+
+window.addEventListener('appinstalled', () => {
+  $('installera-btn').hidden = true;
+  installPrompt = null;
+});
 
 // ---------- Dokumentlista ----------
 
@@ -674,7 +760,7 @@ function enterAdjustStage() {
   $('scan-continue-btn').hidden = false;
   $('scan-preview').hidden = false;
   drawAdjust();
-  showStatus($('scan-status'), 'Dra i hörnen så att den blå ramen följer kanterna. Tryck sedan på Beskär.');
+  showStatus($('scan-status'), 'Dra i hörnen så att den gröna ramen följer kanterna. Tryck sedan på Beskär.');
 }
 
 function drawAdjust() {
@@ -687,14 +773,14 @@ function drawAdjust() {
   ctx.filter = 'none';
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
   const pts = CORNER_KEYS.map((k) => ({ x: cropCorners[k].x * adjustScale, y: cropCorners[k].y * adjustScale }));
-  ctx.strokeStyle = '#1d5b8f';
+  ctx.strokeStyle = '#47664c';
   ctx.lineWidth = Math.max(2, canvas.width / 250);
   ctx.beginPath();
   ctx.moveTo(pts[0].x, pts[0].y);
   for (let i = 1; i < 4; i++) ctx.lineTo(pts[i].x, pts[i].y);
   ctx.closePath();
   ctx.stroke();
-  ctx.fillStyle = 'rgba(29, 91, 143, 0.35)';
+  ctx.fillStyle = 'rgba(71, 102, 76, 0.35)';
   for (const p of pts) {
     ctx.beginPath();
     ctx.arc(p.x, p.y, Math.max(12, canvas.width / 45), 0, 7);
