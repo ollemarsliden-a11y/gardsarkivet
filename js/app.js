@@ -100,6 +100,31 @@ async function loadDocuments() {
   currentDocs = data;
   await loadCommentCounts();
   renderDocuments(filteredDocs());
+  visaHalsning();
+}
+
+// Hälsningen efter tid på dygnet, plus vad arkivet innehåller
+async function visaHalsning() {
+  const timme = new Date().getHours();
+  $('greeting').textContent = timme < 10 ? 'God morgon' : timme < 18 ? 'God dag' : 'God kväll';
+
+  const { data } = await supabase.from('documents').select('category');
+  if (!data) return;
+  const foton = data.filter((d) => d.category === 'foton').length;
+  const dokument = data.length - foton;
+  const del = (antal, ental, plural) => `${antal} ${antal === 1 ? ental : plural}`;
+
+  let text;
+  if (!data.length) {
+    text = 'Arkivet är tomt ännu. Skanna eller ladda upp det första.';
+  } else if (!foton) {
+    text = del(dokument, 'dokument', 'dokument') + ' i arkivet.';
+  } else if (!dokument) {
+    text = del(foton, 'foto', 'foton') + ' i arkivet.';
+  } else {
+    text = `${del(dokument, 'dokument', 'dokument')} och ${del(foton, 'foto', 'foton')} i arkivet.`;
+  }
+  $('archive-count').textContent = text;
 }
 
 // ---------- Kommentarer ----------
@@ -276,12 +301,12 @@ function renderDocuments(docs) {
     });
 
     const delBtn = document.createElement('button');
-    delBtn.className = 'btn btn-danger';
-    delBtn.textContent = '✕ Radera';
+    delBtn.className = 'kort-lank kort-lank-fara';
+    delBtn.textContent = 'Radera';
     delBtn.addEventListener('click', () => deleteDocument(doc, delBtn));
 
     const commentBtn = document.createElement('button');
-    commentBtn.className = 'btn';
+    commentBtn.className = 'kort-lank';
     commentBtn.textContent = 'Kommentarer';
     const count = commentCounts[doc.id];
     if (count) {
@@ -332,7 +357,7 @@ async function deleteDocument(doc, btn) {
   } catch (err) {
     alert('Kunde inte radera: ' + (err.message ?? err));
     btn.disabled = false;
-    btn.textContent = '✕ Radera';
+    btn.textContent = 'Radera';
   }
 }
 

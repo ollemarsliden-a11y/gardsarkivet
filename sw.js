@@ -1,7 +1,7 @@
 // Cachar bara appens eget skal (HTML/CSS/JS/ikoner) så att den startar snabbt
 // och visar något vettigt utan täckning. Dokumenten själva cachas aldrig –
 // de innehåller personuppgifter och ska bara finnas i lagringen.
-const CACHE = 'marsliden-skal-v2';
+const CACHE = 'marsliden-skal-v3';
 const SKAL = ['./', './index.html', './css/style.css', './js/app.js', './js/config.js',
   './icon-192.png', './icon-512.png', './kultsjon.jpg', './manifest.json'];
 

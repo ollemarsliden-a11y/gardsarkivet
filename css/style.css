@@ -1,147 +1,150 @@
-/* Marsliden 1:10 – design: "modern lantmäterihandling".
-   Kulör från Kultsjön: djup sjöblå, isblå bakgrund, vita kort.
-   Display: Bricolage Grotesque (wordmark/rubriker), brödtext: systemsans. */
+/* Marsliden 1:10 – "familjealbum på köksbordet".
+   Färgerna är hämtade ur bilden från Kultsjön: granskog, björkgult,
+   sandstrand och den rostbruna båten. Rundade former, varma skuggor
+   och kort som ligger som fotografier på ett bord. */
 
 :root {
-  --fjall: #14293d;      /* djup sjöblå – text, header */
-  --sjo: #1d5b8f;        /* primär blå – knappar, aktiva val */
-  --sjo-mork: #154568;
-  --is: #eef3f7;         /* isblå bakgrund */
-  --kort: #ffffff;
-  --dis: #5b7286;        /* dämpad text */
-  --ram: #d4dfe8;        /* kantlinjer */
-  --varning: #a93c2c;
-  --fokus: #2e7cc0;
+  --skog: #2c4232;       /* mörk granskog – rubriker och brödtext */
+  --gran: #47664c;       /* primär grön – knappar och aktiva val */
+  --gran-mork: #36503b;
+  --gran-ljus: #eaf0e8;  /* ljus grön botten för statusrutor */
+  --sand: #f3ede1;       /* varm sandbakgrund */
+  --kort: #fffcf6;       /* varmvitt papper */
+  --bjork: #e5dcc9;      /* björkbark – hårfina kantlinjer */
+  --tjara: #6f6656;      /* dämpad text */
+  --rost: #a75a33;       /* båtens rost – årtal och accenter */
+  --varning: #9d3b2c;
+  --fokus: #6b8f6f;
+
+  --rundning: 18px;
+  --rundning-stor: 24px;
+  --skugga: 0 1px 2px rgba(44, 66, 50, 0.04), 0 4px 12px rgba(44, 66, 50, 0.06);
+  --skugga-lyft: 0 2px 5px rgba(44, 66, 50, 0.06), 0 12px 28px rgba(44, 66, 50, 0.12);
 }
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
-  background: var(--is);
-  color: var(--fjall);
+  font-family: 'Nunito Sans', system-ui, 'Segoe UI', sans-serif;
+  background: var(--sand);
+  color: var(--skog);
   font-size: 17px; /* stor text – flera användare är äldre */
-  line-height: 1.55;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
-.view { max-width: 720px; margin: 0 auto; padding: 1rem; }
+.view { max-width: 720px; margin: 0 auto; padding: 1rem 1rem 2rem; }
 
-/* Wordmark – "fastighetsplattan" */
+/* Wordmark */
 .wordmark {
-  font-family: 'Bricolage Grotesque', system-ui, sans-serif;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--fjall);
-  text-transform: uppercase;
+  font-family: Fraunces, Georgia, serif;
+  font-weight: 600;
+  font-variation-settings: 'SOFT' 40, 'WONK' 1;
+  letter-spacing: 0.01em;
+  color: var(--skog);
   margin: 0;
-  font-size: 1.35rem;
-  line-height: 1.2;
+  font-size: 1.5rem;
+  line-height: 1.15;
 }
-.wordmark .beteckning { color: var(--sjo); }
+.wordmark .beteckning { color: var(--rost); }
 .tagline {
   font-size: 0.78rem;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--dis);
-  margin: 0.15rem 0 0;
+  color: var(--tjara);
+  margin: 0.2rem 0 0;
 }
-/* Längre, beskrivande variant – versaler och spärrad text blir tungt att läsa */
+/* Längre, beskrivande variant – versaler blir tungt att läsa i en mening */
 .tagline-lang {
-  font-size: 0.95rem;
+  font-size: 1rem;
   letter-spacing: 0;
   text-transform: none;
-  margin-top: 0.4rem;
+  margin-top: 0.5rem;
 }
 
 /* Inloggning */
 .login-box {
-  margin-top: 8vh;
+  margin-top: 7vh;
   background: var(--kort);
-  border: 1px solid var(--ram);
-  border-top: 4px solid var(--sjo);
-  border-radius: 14px;
-  padding: 2.25rem 1.75rem;
+  border: 1px solid var(--bjork);
+  border-radius: var(--rundning-stor);
+  box-shadow: var(--skugga-lyft);
+  padding: 2.5rem 1.75rem 2rem;
   text-align: center;
 }
-.login-box .wordmark { font-size: 1.7rem; }
-.login-box form { display: flex; flex-direction: column; gap: 0.75rem; text-align: left; margin-top: 1.5rem; }
+.login-box .wordmark { font-size: 2rem; }
+.login-box form { display: flex; flex-direction: column; gap: 0.75rem; text-align: left; margin-top: 1.75rem; }
 .login-divider {
   display: flex; align-items: center; gap: 0.75rem;
-  margin: 1.25rem 0 0.9rem; color: var(--dis); font-size: 0.85rem;
+  margin: 1.25rem 0 0.9rem; color: var(--tjara); font-size: 0.85rem;
 }
 .login-divider::before, .login-divider::after {
-  content: ''; flex: 1; border-top: 1px solid var(--ram);
+  content: ''; flex: 1; border-top: 1px solid var(--bjork);
 }
 
-/* Bilden från Kultsjön – går kant i kant och tonas ut nedåt mot bakgrunden */
+/* Bilden från Kultsjön – ligger som ett fotografi i albumet */
 .hero {
   display: block;
-  width: calc(100% + 2rem);
-  margin: 0.35rem -1rem 0.15rem;
+  width: 100%;
   height: auto;
-  -webkit-mask-image: linear-gradient(to bottom, #000 42%, rgba(0,0,0,0.3) 76%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 42%, rgba(0,0,0,0.3) 76%, transparent 100%);
+  margin: 1rem 0 0;
+  border-radius: var(--rundning-stor);
+  filter: saturate(0.94) sepia(0.06);
+  -webkit-mask-image: linear-gradient(to bottom, #000 62%, rgba(0,0,0,0.45) 84%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 62%, rgba(0,0,0,0.45) 84%, transparent 100%);
 }
 
-/* Textlänk som ser ut som en länk men beter sig som en knapp */
-.lank-btn {
-  background: none; border: none; padding: 0;
-  font: inherit; font-size: 0.85rem;
-  color: var(--sjo); text-decoration: underline; cursor: pointer;
+/* Välkomnande huvudparti */
+.halsning { margin: -0.75rem 0 1.25rem; text-align: center; }
+.halsning h2 {
+  font-family: Fraunces, Georgia, serif;
+  font-weight: 500;
+  font-variation-settings: 'SOFT' 40, 'WONK' 1;
+  font-size: 1.5rem;
+  margin: 0;
+  color: var(--skog);
 }
-.lank-btn:hover { color: var(--sjo-mork); }
-
-.app-footer {
-  margin: 2rem 0 1rem; padding-top: 1rem;
-  border-top: 1px solid var(--ram); text-align: center;
-}
-
-/* Informationssidan */
-.info-box h3 {
-  font-size: 1rem; margin: 1.25rem 0 0.35rem; color: var(--sjo-mork);
-}
-.info-box h3:first-of-type { margin-top: 0.75rem; }
-.info-box p { margin: 0 0 0.6rem; font-size: 0.95rem; }
-#info-dialog { max-height: 85vh; overflow-y: auto; }
+.halsning p { margin: 0.15rem 0 0; color: var(--tjara); font-size: 0.95rem; }
 
 /* Formulärelement */
 input, select, textarea {
   font: inherit;
-  padding: 0.75rem;
-  border: 1px solid var(--ram);
-  border-radius: 9px;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--bjork);
+  border-radius: 14px;
   width: 100%;
   background: var(--kort);
   color: inherit;
 }
 input:focus-visible, select:focus-visible, textarea:focus-visible,
-.btn:focus-visible, .cat-btn:focus-visible {
+.btn:focus-visible, .cat-btn:focus-visible, .lank-btn:focus-visible {
   outline: 3px solid var(--fokus);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
-label { font-weight: 600; font-size: 0.9rem; }
+label { font-weight: 700; font-size: 0.9rem; }
 
-/* Knappar – stora och tydliga */
+/* Knappar */
 .btn {
   font: inherit;
-  font-weight: 600;
-  padding: 0.75rem 1.25rem;
-  border-radius: 9px;
-  border: 1px solid var(--ram);
+  font-weight: 700;
+  padding: 0.8rem 1.35rem;
+  border-radius: 14px;
+  border: 1px solid var(--bjork);
   background: var(--kort);
-  color: var(--fjall);
+  color: var(--skog);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.55rem;
+  box-shadow: var(--skugga);
 }
-.btn:hover { border-color: var(--sjo); }
-.btn-primary { background: var(--sjo); color: #fff; border-color: var(--sjo-mork); }
-.btn-primary:hover { background: var(--sjo-mork); }
-.btn-big { width: 100%; font-size: 1.1rem; padding: 1rem; }
-.btn-small { font-size: 0.85rem; padding: 0.45rem 0.8rem; }
+.btn:hover { border-color: var(--gran); }
+.btn-primary { background: var(--gran); color: #fff; border-color: var(--gran-mork); }
+.btn-primary:hover { background: var(--gran-mork); }
+.btn-big { width: 100%; font-size: 1.1rem; padding: 1.05rem; border-radius: 16px; }
+.btn-small { font-size: 0.85rem; padding: 0.45rem 0.9rem; border-radius: 999px; }
 .btn-danger { color: var(--varning); }
 .btn-danger:hover { border-color: var(--varning); }
 .btn-google { width: 100%; }
@@ -152,149 +155,175 @@ header {
   display: flex; justify-content: space-between; align-items: center;
   flex-wrap: wrap; gap: 0.5rem;
   padding-bottom: 0.9rem;
-  border-bottom: 2px solid var(--fjall);
-  margin-bottom: 0.9rem;
-  position: relative;
+  border-bottom: 1px solid var(--bjork);
 }
-header::after {
-  /* sjöhorisonten: en tunn andra linje under den grova */
-  content: '';
-  position: absolute; left: 0; right: 0; bottom: -5px;
-  border-top: 1px solid var(--ram);
-}
-.header-actions { display: flex; align-items: center; gap: 0.75rem; }
-.user-email { font-size: 0.8rem; color: var(--dis); }
+.header-actions { display: flex; align-items: center; gap: 0.6rem; }
+.user-email { font-size: 0.8rem; color: var(--tjara); }
 
 /* Sök */
-.search-row { margin: 0.9rem 0 0.6rem; position: relative; }
+.search-row { margin: 0 0 0.6rem; position: relative; }
 .search-row .ikon {
-  position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%);
-  color: var(--dis); pointer-events: none;
+  position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
+  color: var(--tjara); pointer-events: none;
 }
-#search-input { padding-left: 2.6rem; }
+#search-input { padding-left: 2.9rem; border-radius: 999px; box-shadow: var(--skugga); }
 
-.sort-row {
-  display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.3rem;
-}
-.sort-row label { color: var(--dis); font-size: 0.85rem; }
-.sort-row select { width: auto; flex: 1; max-width: 15rem; font-size: 0.9rem; padding: 0.5rem; }
+.sort-row { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem; }
+.sort-row label { color: var(--tjara); font-size: 0.85rem; font-weight: 400; }
+.sort-row select { width: auto; flex: 1; max-width: 15rem; font-size: 0.9rem; padding: 0.55rem 0.9rem; border-radius: 999px; }
 
-/* Kategorier – kartlegend */
-.category-nav { display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 0.6rem 0 0.9rem; }
+/* Kategorier */
+.category-nav { display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 0.6rem 0 1rem; }
 .cat-btn {
-  font: inherit; font-size: 0.88rem; font-weight: 600;
-  padding: 0.5rem 0.95rem;
+  font: inherit; font-size: 0.88rem; font-weight: 700;
+  padding: 0.5rem 1rem;
   border-radius: 999px;
-  border: 1px solid var(--ram);
+  border: 1px solid var(--bjork);
   background: var(--kort);
-  color: var(--fjall);
+  color: var(--skog);
   cursor: pointer;
 }
-.cat-btn:hover { border-color: var(--sjo); }
-.cat-btn.active { background: var(--fjall); color: #fff; border-color: var(--fjall); }
+.cat-btn:hover { border-color: var(--gran); }
+.cat-btn.active { background: var(--gran); color: #fff; border-color: var(--gran-mork); }
 
 /* Stora åtgärdsknappar */
-.big-actions { display: flex; flex-direction: column; gap: 0.55rem; margin: 0.9rem 0 1.1rem; }
+.big-actions { display: flex; flex-direction: column; gap: 0.6rem; margin: 0 0 1.5rem; }
 .big-actions .btn-big { margin: 0; }
 
-/* Dokumentlista */
-.doc-list { display: flex; flex-direction: column; gap: 0.7rem; }
+/* Dokumentkort – som fotografier på ett bord */
+.doc-list { display: flex; flex-direction: column; gap: 0.85rem; }
 .doc-card {
   background: var(--kort);
-  border: 1px solid var(--ram);
-  border-left: 4px solid var(--sjo);
-  border-radius: 11px;
-  padding: 1rem 1.1rem;
+  border: 1px solid var(--bjork);
+  border-radius: var(--rundning);
+  box-shadow: var(--skugga);
+  padding: 1.15rem 1.25rem;
 }
-.doc-card h3 { margin: 0 0 0.2rem; font-size: 1.08rem; font-weight: 650; }
-.doc-meta { font-size: 0.8rem; color: var(--dis); margin: 0 0 0.45rem; letter-spacing: 0.02em; }
-.doc-desc { margin: 0 0 0.7rem; font-size: 0.95rem; }
-.doc-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
-.doc-actions .cat-move { width: auto; padding: 0.55rem; font-size: 0.85rem; }
-.empty-msg { text-align: center; color: var(--dis); padding: 2.5rem 0; }
+.doc-card h3 {
+  font-family: Fraunces, Georgia, serif;
+  font-weight: 600;
+  font-variation-settings: 'SOFT' 40;
+  margin: 0 0 0.3rem; font-size: 1.15rem;
+}
+.doc-meta { font-size: 0.82rem; color: var(--tjara); margin: 0 0 0.55rem; }
+.doc-desc { margin: 0 0 0.85rem; font-size: 0.96rem; }
+.doc-actions { display: flex; gap: 0.85rem; flex-wrap: wrap; align-items: center; }
+/* Sekundära åtgärder hålls tillbaka så att kortet andas */
+.kort-lank {
+  background: none; border: none; padding: 0.35rem 0;
+  font: inherit; font-size: 0.88rem; font-weight: 600;
+  color: var(--tjara); text-decoration: underline;
+  text-underline-offset: 3px; cursor: pointer;
+}
+.kort-lank:hover { color: var(--gran); }
+.kort-lank-fara:hover { color: var(--varning); }
+.kort-lank:focus-visible { outline: 3px solid var(--fokus); outline-offset: 2px; border-radius: 4px; }
+.doc-actions .cat-move { width: auto; padding: 0.5rem 0.8rem; font-size: 0.85rem; border-radius: 999px; box-shadow: var(--skugga); }
+.doc-year {
+  display: inline-block;
+  font-family: Fraunces, Georgia, serif;
+  font-weight: 600; color: var(--rost);
+  font-variant-numeric: tabular-nums; margin-right: 0.5rem;
+  font-size: 0.95rem;
+}
+.empty-msg { text-align: center; color: var(--tjara); padding: 2.5rem 0; }
 
 /* Dialoger */
 dialog {
-  border: 1px solid var(--ram);
-  border-top: 4px solid var(--sjo);
-  border-radius: 14px;
-  padding: 1.5rem;
+  border: 1px solid var(--bjork);
+  border-radius: var(--rundning-stor);
+  box-shadow: var(--skugga-lyft);
+  padding: 1.75rem;
   width: min(500px, 92vw);
-  color: var(--fjall);
+  background: var(--kort);
+  color: var(--skog);
 }
-dialog::backdrop { background: rgba(20, 41, 61, 0.55); }
+dialog::backdrop { background: rgba(44, 66, 50, 0.45); }
 dialog form { display: flex; flex-direction: column; gap: 0.6rem; }
 dialog h2 {
-  font-family: 'Bricolage Grotesque', system-ui, sans-serif;
-  font-size: 1.25rem; margin: 0 0 0.25rem;
+  font-family: Fraunces, Georgia, serif;
+  font-weight: 600;
+  font-variation-settings: 'SOFT' 40, 'WONK' 1;
+  font-size: 1.35rem; margin: 0 0 0.35rem;
 }
-.dialog-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.6rem; flex-wrap: wrap; }
 
 /* Skanning */
-.scan-box { display: flex; flex-direction: column; gap: 0.75rem; }
+.scan-box { display: flex; flex-direction: column; gap: 0.8rem; }
 .scan-mode { display: flex; gap: 0.45rem; }
 .scan-mode .btn { flex: 1; }
-.scan-mode .btn.active { background: var(--fjall); color: #fff; border-color: var(--fjall); }
-.sharpen-row {
-  display: flex; align-items: center; gap: 0.55rem;
-  font-weight: 600; font-size: 0.92rem; cursor: pointer;
-}
-.sharpen-row input { width: 1.35rem; height: 1.35rem; accent-color: var(--sjo); }
+.scan-mode .btn.active { background: var(--gran); color: #fff; border-color: var(--gran-mork); }
 .scan-preview {
   max-width: 100%; max-height: 52vh; object-fit: contain;
-  border: 1px solid var(--ram); border-radius: 9px; align-self: center;
+  border: 1px solid var(--bjork); border-radius: 14px; align-self: center;
   touch-action: none; /* så att hörndragning inte scrollar sidan på mobil */
 }
-
-.page-count {
-  margin: 0; font-size: 0.9rem; font-weight: 600; color: var(--sjo);
+.sharpen-row {
+  display: flex; align-items: center; gap: 0.6rem;
+  font-weight: 700; font-size: 0.92rem; cursor: pointer;
 }
+.sharpen-row input { width: 1.4rem; height: 1.4rem; accent-color: var(--gran); }
+.page-count { margin: 0; font-size: 0.9rem; font-weight: 700; color: var(--gran); }
 
-/* Kommentarer */
-.comment-list { display: flex; flex-direction: column; gap: 0.6rem; max-height: 40vh; overflow-y: auto; }
+/* Kommentarer och personer */
+.comment-list { display: flex; flex-direction: column; gap: 0.65rem; max-height: 40vh; overflow-y: auto; }
 .comment {
-  background: var(--is); border: 1px solid var(--ram); border-radius: 9px;
-  padding: 0.6rem 0.75rem;
+  background: var(--sand); border: 1px solid var(--bjork); border-radius: 14px;
+  padding: 0.7rem 0.85rem;
 }
-.comment p { margin: 0 0 0.25rem; font-size: 0.95rem; }
-.comment-meta { font-size: 0.78rem; color: var(--dis); display: flex; justify-content: space-between; gap: 0.5rem; align-items: center; }
+.comment p { margin: 0 0 0.3rem; font-size: 0.95rem; }
+.comment-meta { font-size: 0.78rem; color: var(--tjara); display: flex; justify-content: space-between; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 .comment-del {
-  background: none; border: none; color: var(--dis); cursor: pointer;
+  background: none; border: none; color: var(--tjara); cursor: pointer;
   font: inherit; font-size: 0.78rem; text-decoration: underline; padding: 0;
 }
 .comment-del:hover { color: var(--varning); }
-.comment-count { font-size: 0.85rem; color: var(--dis); }
-.admin-badge {
-  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.06em; color: var(--sjo);
-  border: 1px solid var(--sjo); border-radius: 999px; padding: 0.1rem 0.45rem;
+.comment-count { font-size: 0.85rem; color: var(--tjara); }
+#comment-form, #people-form { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.6rem; }
+
+.admin-badge, .session-badge {
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; border-radius: 999px; padding: 0.12rem 0.5rem;
   white-space: nowrap;
 }
-.session-badge {
-  font-size: 0.72rem; font-weight: 600;
-  color: #1c6b3f; background: #e4f2ea; border: 1px solid #9ecdb4;
-  border-radius: 999px; padding: 0.1rem 0.45rem; white-space: nowrap;
-}
+.admin-badge { color: var(--gran); border: 1px solid var(--gran); }
+.session-badge { color: #2f6b46; background: #e3f0e6; border: 1px solid #a8c9b0; }
 .person-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
-#people-form { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
-#comment-form { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
 
-/* Årtal på kortet */
-.doc-year {
-  display: inline-block; font-weight: 700; color: var(--sjo);
-  font-variant-numeric: tabular-nums; margin-right: 0.45rem;
+/* Textlänk som ser ut som en länk men beter sig som en knapp */
+.lank-btn {
+  background: none; border: none; padding: 0;
+  font: inherit; font-size: 0.85rem;
+  color: var(--gran); text-decoration: underline; cursor: pointer;
 }
+.lank-btn:hover { color: var(--gran-mork); }
+
+.app-footer {
+  margin: 2.5rem 0 0.5rem; padding-top: 1.25rem;
+  border-top: 1px solid var(--bjork); text-align: center;
+}
+
+/* Informationssidan */
+.info-box h3 {
+  font-family: Fraunces, Georgia, serif;
+  font-weight: 600;
+  font-size: 1.05rem; margin: 1.35rem 0 0.35rem; color: var(--gran-mork);
+}
+.info-box h3:first-of-type { margin-top: 0.85rem; }
+.info-box p { margin: 0 0 0.6rem; font-size: 0.95rem; }
+#info-dialog { max-height: 85vh; overflow-y: auto; }
 
 /* Status */
 .status {
-  padding: 0.65rem 0.8rem; border-radius: 9px;
-  background: #e7eef5; border: 1px solid var(--sjo);
+  padding: 0.7rem 0.9rem; border-radius: 14px;
+  background: var(--gran-ljus); border: 1px solid var(--gran);
   font-size: 0.92rem;
 }
-.status.error { background: #f7ebe8; border-color: var(--varning); color: var(--varning); }
-.hint { font-size: 0.83rem; color: var(--dis); }
+.status.error { background: #f8ebe7; border-color: var(--varning); color: var(--varning); }
+.hint { font-size: 0.85rem; color: var(--tjara); }
 
 @media (prefers-reduced-motion: no-preference) {
-  .doc-card { transition: border-color 120ms ease; }
-  .doc-card:hover { border-color: var(--sjo); }
+  .doc-card, .btn { transition: box-shadow 160ms ease, transform 160ms ease, background-color 160ms ease; }
+  .doc-card:hover { box-shadow: var(--skugga-lyft); transform: translateY(-2px); }
+  .btn:hover { box-shadow: var(--skugga-lyft); }
 }
