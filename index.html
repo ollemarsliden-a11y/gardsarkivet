@@ -8,7 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=4">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" href="icon-192.png">
+  <link rel="stylesheet" href="css/style.css?v=5">
 </head>
 <body>
   <!-- Inloggningsvy -->
@@ -46,7 +49,17 @@
 
     <div class="search-row">
       <svg class="ikon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-      <input type="search" id="search-input" placeholder="Sök på namn eller beskrivning…" autocomplete="off" aria-label="Sök bland dokumenten">
+      <input type="search" id="search-input" placeholder="Sök på namn, beskrivning eller innehåll…" autocomplete="off" aria-label="Sök bland dokumenten">
+    </div>
+
+    <div class="sort-row">
+      <label for="sort-select">Sortera</label>
+      <select id="sort-select">
+        <option value="nytt">Senast uppladdat</option>
+        <option value="ar-gammalt">Årtal, äldst först</option>
+        <option value="ar-nytt">Årtal, senast först</option>
+        <option value="namn">Namn A–Ö</option>
+      </select>
     </div>
 
     <nav id="category-nav" class="category-nav" aria-label="Kategorier">
@@ -84,6 +97,8 @@
       <input type="file" id="file-input" accept="application/pdf,image/*" required>
       <label for="title-input">Namn på dokumentet</label>
       <input type="text" id="title-input" placeholder="t.ex. Köpekontrakt 1962" required maxlength="120">
+      <label for="year-input">Årtal (frivilligt)</label>
+      <input type="number" id="year-input" placeholder="t.ex. 1962" min="1500" max="2100" inputmode="numeric">
       <label for="cat-input">Kategori</label>
       <select id="cat-input" required>
         <option value="kopekontrakt">Köpekontrakt</option>
@@ -117,16 +132,35 @@
         Förbättra skärpa och kontrast
       </label>
       <canvas id="scan-preview" class="scan-preview" hidden></canvas>
+      <p id="page-count" class="page-count" hidden></p>
       <div class="dialog-actions">
         <button type="button" id="scan-cancel-btn" class="btn">Avbryt</button>
         <button type="button" id="scan-retake-btn" class="btn" hidden>Ta om</button>
         <button type="button" id="scan-back-btn" class="btn" hidden>Justera hörnen</button>
         <button type="button" id="scan-continue-btn" class="btn btn-primary" hidden>Beskär</button>
-        <button type="button" id="scan-accept-btn" class="btn btn-primary" hidden>Ser bra ut – fortsätt</button>
+        <button type="button" id="scan-addpage-btn" class="btn" hidden>Lägg till sida</button>
+        <button type="button" id="scan-accept-btn" class="btn btn-primary" hidden>Klar – fortsätt</button>
       </div>
     </div>
   </dialog>
 
-  <script type="module" src="js/app.js?v=8"></script>
+  <!-- Kommentarsdialog -->
+  <dialog id="comment-dialog">
+    <div class="scan-box">
+      <h2 id="comment-title">Kommentarer</h2>
+      <div id="comment-list" class="comment-list"></div>
+      <form id="comment-form">
+        <label for="comment-input">Skriv en kommentar</label>
+        <textarea id="comment-input" rows="2" required maxlength="500"
+          placeholder="t.ex. Farfar vid båthuset, sommaren 1954"></textarea>
+        <div class="dialog-actions">
+          <button type="button" id="comment-close-btn" class="btn">Stäng</button>
+          <button type="submit" class="btn btn-primary">Spara kommentar</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <script type="module" src="js/app.js?v=9"></script>
 </body>
 </html>

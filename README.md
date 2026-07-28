@@ -92,6 +92,23 @@ R2-bucketens CORS-policy och i Supabase: Authentication → URL Configuration �
   mellan kategorier. Kräver att `supabase/etapp2-uppdatering.sql` körts i SQL Editor.
 - Radering tar bort både filen i R2 (via edge-funktionen) och raden i databasen.
 
+## Etapp 3-funktioner
+
+Kräver att `supabase/etapp3-uppdatering.sql` körts i SQL Editor (lägger till
+kolumnerna `year` och `ocr_text` samt tabellen `comments`).
+
+- **Flersidiga skanningar:** "Lägg till sida" i förhandsgranskningen sparar sidan
+  och öppnar kameran igen. Alla sidor hamnar i samma PDF.
+- **Installera som app:** `manifest.json` + `sw.js` gör appen installerbar på
+  hemskärmen. Service workern cachar bara appens skal – aldrig dokumenten.
+- **Kommentarer:** knapp på varje kort. Alla inbjudna kan kommentera; man kan
+  bara ta bort sina egna. Antalet visas på knappen.
+- **Textsökning i dokument (OCR):** skannade dokument textläses med tesseract.js
+  (svensk språkmodell) vid uppladdning och texten sparas i `ocr_text`, som
+  sökrutan söker i. Foton textläses inte. Misslyckas OCR:en sparas dokumentet ändå.
+- **Årtal:** eget fält för dokumentets/fotots år, visas på kortet och används av
+  sorteringen. Dokument utan årtal hamnar sist vid årtalssortering.
+
 ## Säkerhet i korthet
 
 - Registrering avstängd – endast inbjudna konton kan logga in.

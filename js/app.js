@@ -14,6 +14,10 @@ let currentCategory = 'alla';
 let currentDocs = [];
 let searchTerm = '';
 
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+
 function showStatus(el, msg, isError = false) {
   el.textContent = msg;
   el.hidden = false;
@@ -81,14 +85,111 @@ async function loadDocuments() {
     return;
   }
   currentDocs = data;
+  await loadCommentCounts();
   renderDocuments(filteredDocs());
 }
 
-function filteredDocs() {
-  if (!searchTerm) return currentDocs;
-  return currentDocs.filter((doc) =>
-    (doc.title + ' ' + (doc.description ?? '')).toLowerCase().includes(searchTerm));
+// ---------- Kommentarer ----------
+
+let commentCounts = {};
+let commentDoc = null;
+
+async function loadCommentCounts() {
+  const { data } = await supabase.from('comments').select('document_id');
+  commentCounts = {};
+  for (const row of data ?? []) {
+    commentCounts[row.document_id] = (commentCounts[row.document_id] ?? 0) + 1;
+  }
 }
+
+async function openComments(doc) {
+  commentDoc = doc;
+  $('comment-title').textContent = 'Kommentarer – ' + doc.title;
+  $('comment-input').value = '';
+  $('comment-dialog').showModal();
+  await renderComments();
+}
+
+async function renderComments() {
+  const list = $('comment-list');
+  list.innerHTML = '';
+  const { data, error } = await supabase.from('comments')
+    .select('*').eq('document_id', commentDoc.id).order('created_at');
+  if (error) {
+    list.textContent = 'Kunde inte hämta kommentarer: ' + error.message;
+    return;
+  }
+  if (!data.length) {
+    const p = document.createElement('p');
+    p.className = 'empty-msg';
+    p.textContent = 'Inga kommentarer ännu. Vet du vilka som är med på bilden, eller vad dokumentet gäller?';
+    list.append(p);
+    return;
+  }
+  const { data: { user } } = await supabase.auth.getUser();
+  for (const c of data) {
+    const wrap = document.createElement('article');
+    wrap.className = 'comment';
+    const body = document.createElement('p');
+    body.textContent = c.body;
+    const meta = document.createElement('div');
+    meta.className = 'comment-meta';
+    meta.append(`${c.author_email} · ${new Date(c.created_at).toLocaleDateString('sv-SE')}`);
+    if (c.author_email === user.email) {
+      const del = document.createElement('button');
+      del.className = 'comment-del';
+      del.textContent = 'Ta bort';
+      del.addEventListener('click', async () => {
+        if (!confirm('Ta bort kommentaren?')) return;
+        await supabase.from('comments').delete().eq('id', c.id);
+        await renderComments();
+        await loadCommentCounts();
+        renderDocuments(filteredDocs());
+      });
+      meta.append(del);
+    }
+    wrap.append(body, meta);
+    list.append(wrap);
+  }
+}
+
+$('comment-close-btn').addEventListener('click', () => $('comment-dialog').close());
+
+$('comment-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const { data: { user } } = await supabase.auth.getUser();
+  const { error } = await supabase.from('comments').insert({
+    document_id: commentDoc.id,
+    body: $('comment-input').value.trim(),
+    author_email: user.email,
+  });
+  if (error) {
+    alert('Kunde inte spara kommentaren: ' + error.message);
+    return;
+  }
+  $('comment-input').value = '';
+  await renderComments();
+  await loadCommentCounts();
+  renderDocuments(filteredDocs());
+});
+
+function filteredDocs() {
+  // Söker i namn, beskrivning, årtal och texten som lästs ur skannade dokument
+  const träffar = searchTerm
+    ? currentDocs.filter((doc) =>
+      [doc.title, doc.description, doc.year, doc.ocr_text].join(' ').toLowerCase().includes(searchTerm))
+    : [...currentDocs];
+
+  const sort = $('sort-select').value;
+  // Dokument utan årtal hamnar sist vid årtalssortering
+  const år = (d) => d.year ?? (sort === 'ar-gammalt' ? Infinity : -Infinity);
+  if (sort === 'ar-gammalt') träffar.sort((a, b) => år(a) - år(b));
+  else if (sort === 'ar-nytt') träffar.sort((a, b) => år(b) - år(a));
+  else if (sort === 'namn') träffar.sort((a, b) => a.title.localeCompare(b.title, 'sv'));
+  return träffar;
+}
+
+$('sort-select').addEventListener('change', () => renderDocuments(filteredDocs()));
 
 $('search-input').addEventListener('input', () => {
   searchTerm = $('search-input').value.trim().toLowerCase();
@@ -114,8 +215,14 @@ function renderDocuments(docs) {
 
     const meta = document.createElement('p');
     meta.className = 'doc-meta';
+    if (doc.year) {
+      const year = document.createElement('span');
+      year.className = 'doc-year';
+      year.textContent = doc.year;
+      meta.append(year);
+    }
     const date = new Date(doc.created_at).toLocaleDateString('sv-SE');
-    meta.textContent = `${CATEGORY_NAMES[doc.category] ?? doc.category} · ${date} · uppladdad av ${doc.uploaded_by_email}`;
+    meta.append(`${CATEGORY_NAMES[doc.category] ?? doc.category} · uppladdad ${date} av ${doc.uploaded_by_email}`);
 
     card.append(h3, meta);
 
@@ -160,7 +267,19 @@ function renderDocuments(docs) {
     delBtn.textContent = '✕ Radera';
     delBtn.addEventListener('click', () => deleteDocument(doc, delBtn));
 
-    actions.append(openBtn, moveSel, delBtn);
+    const commentBtn = document.createElement('button');
+    commentBtn.className = 'btn';
+    commentBtn.textContent = 'Kommentarer';
+    const count = commentCounts[doc.id];
+    if (count) {
+      const badge = document.createElement('span');
+      badge.className = 'comment-count';
+      badge.textContent = `(${count})`;
+      commentBtn.append(' ', badge);
+    }
+    commentBtn.addEventListener('click', () => openComments(doc));
+
+    actions.append(openBtn, commentBtn, moveSel, delBtn);
     card.append(actions);
 
     list.append(card);
@@ -244,10 +363,14 @@ function loadScanLibs() {
   return scanLibsPromise;
 }
 
-$('scan-btn').addEventListener('click', () => $('scan-input').click());
+$('scan-btn').addEventListener('click', () => {
+  scanPages = [];
+  $('scan-input').click();
+});
 
 let scanStage = 'adjust'; // 'adjust' = dra i hörnen, 'preview' = färdigt resultat
 let cropCorners = null;   // fyra hörn i originalbildens koordinater
+let scanPages = [];       // färdiga sidor som dataURL, för flersidiga dokument
 const CORNER_KEYS = ['topLeftCorner', 'topRightCorner', 'bottomRightCorner', 'bottomLeftCorner'];
 
 $('scan-input').addEventListener('change', async () => {
@@ -452,9 +575,30 @@ function enterPreviewStage() {
   $('scan-retake-btn').hidden = false;
   $('scan-back-btn').hidden = false;
   $('scan-accept-btn').hidden = false;
+  $('scan-addpage-btn').hidden = scanMode !== 'doc';
   $('sharpen-row').hidden = false;
   renderScan(scanSourceImg);
+  updatePageCount();
 }
+
+function updatePageCount() {
+  const el = $('page-count');
+  if (scanMode !== 'doc' || scanPages.length === 0) {
+    el.hidden = true;
+    return;
+  }
+  el.hidden = false;
+  el.textContent = scanPages.length === 1
+    ? 'Sida 1 är sparad – detta blir sida 2.'
+    : `${scanPages.length} sidor sparade – detta blir sida ${scanPages.length + 1}.`;
+}
+
+// Sparar sidan som visas och öppnar kameran för nästa
+$('scan-addpage-btn').addEventListener('click', () => {
+  scanPages.push($('scan-preview').toDataURL('image/jpeg', 0.85));
+  $('scan-dialog').close();
+  $('scan-input').click();
+});
 
 // Oskarp mask: skärper genom att dra bort en suddig kopia, plus lätt kontrastlyft.
 // Räddar inte riktigt oskarpa bilder, men lyfter mjuka/matta original tydligt.
@@ -524,20 +668,50 @@ $('scan-retake-btn').addEventListener('click', () => {
 $('scan-accept-btn').addEventListener('click', () => {
   const canvas = $('scan-preview');
   if (scanMode === 'doc') {
+    const sidor = [...scanPages, canvas.toDataURL('image/jpeg', 0.85)];
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
-    pdf.addImage(canvas.toDataURL('image/jpeg', 0.85), 'JPEG', 0, 0, 210, 297);
-    scanResult = { blob: pdf.output('blob'), filename: 'skanning.pdf', mime: 'application/pdf', kategori: null };
+    sidor.forEach((sida, i) => {
+      if (i > 0) pdf.addPage();
+      pdf.addImage(sida, 'JPEG', 0, 0, 210, 297);
+    });
+    scanResult = {
+      blob: pdf.output('blob'), filename: 'skanning.pdf',
+      mime: 'application/pdf', kategori: null, sidor,
+    };
+    scanPages = [];
     $('scan-dialog').close();
     openUploadDialog(true);
   } else {
     canvas.toBlob((blob) => {
-      scanResult = { blob, filename: 'foto.jpg', mime: 'image/jpeg', kategori: 'foton' };
+      scanResult = { blob, filename: 'foto.jpg', mime: 'image/jpeg', kategori: 'foton', sidor: [] };
       $('scan-dialog').close();
       openUploadDialog(true);
     }, 'image/jpeg', 0.92);
   }
 });
+
+// ---------- Textläsning (OCR) ----------
+
+// Läser texten i de skannade sidorna så att sökrutan hittar innehållet.
+// Körs bara på dokument, aldrig på foton, och får misslyckas tyst.
+async function lasTextUrSidor(sidor) {
+  if (!sidor?.length) return null;
+  try {
+    if (!window.Tesseract) {
+      await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+    }
+    const delar = [];
+    for (const sida of sidor.slice(0, 10)) { // tak: 10 sidor, annars tar det för lång tid
+      const { data } = await Tesseract.recognize(sida, 'swe');
+      delar.push(data.text);
+    }
+    const text = delar.join('\n').replace(/\s+/g, ' ').trim();
+    return text.length > 20 ? text.slice(0, 50000) : null;
+  } catch {
+    return null; // OCR är en bonus – uppladdningen ska aldrig falla på detta
+  }
+}
 
 // ---------- Uppladdning ----------
 
@@ -550,8 +724,9 @@ function openUploadDialog(fromScan) {
   $('file-input').style.display = scanResult ? 'none' : '';
   document.querySelector('label[for="file-input"]').style.display = scanResult ? 'none' : '';
   if (scanResult) {
+    const antal = scanResult.sidor?.length ?? 1;
     showStatus($('upload-status'), scanResult.mime === 'application/pdf'
-      ? 'Skannad PDF redo – ge den ett namn och välj kategori.'
+      ? `Skannad PDF redo (${antal} ${antal === 1 ? 'sida' : 'sidor'}) – ge den ett namn och välj kategori.`
       : 'Inskannat foto redo – ge det ett namn.');
   } else {
     $('upload-status').hidden = true;
@@ -600,12 +775,21 @@ $('upload-form').addEventListener('submit', async (e) => {
       throw new Error('steg 2, uppladdning till lagringen: ' + (err.message ?? err));
     }
 
-    // 3. Spara metadata i databasen
+    // 3. Läs texten ur skannade dokument, så att sökrutan hittar innehållet
+    let ocrText = null;
+    if (scanResult?.mime === 'application/pdf') {
+      showStatus($('upload-status'), 'Läser texten i dokumentet så att det blir sökbart…');
+      ocrText = await lasTextUrSidor(scanResult.sidor);
+    }
+
+    // 4. Spara metadata i databasen
     const { data: { user } } = await supabase.auth.getUser();
     const { error: dbError } = await supabase.from('documents').insert({
       title: $('title-input').value.trim(),
       category: $('cat-input').value,
       description: $('desc-input').value.trim() || null,
+      year: $('year-input').value ? Number($('year-input').value) : null,
+      ocr_text: ocrText,
       file_key: key,
       file_size: file.size,
       mime_type: file.type || 'application/octet-stream',
