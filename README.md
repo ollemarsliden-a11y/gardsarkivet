@@ -109,6 +109,21 @@ kolumnerna `year` och `ocr_text` samt tabellen `comments`).
 - **Årtal:** eget fält för dokumentets/fotots år, visas på kortet och används av
   sorteringen. Dokument utan årtal hamnar sist vid årtalssortering.
 
+## Administratörer
+
+Kräver `supabase/etapp4-administratorer.sql` (byt ut DIN@EPOST.SE mot din
+inloggningsadress innan du kör den) och edge-funktionen `admin`.
+
+Administratörer ser knappen **Personer** i appens huvudvy och kan där:
+
+- lägga till en person (kontot skapas färdigbekräftat – inget mejl skickas,
+  personen loggar in med Google eller begär en inloggningslänk själv)
+- ta bort en person
+- göra någon annan till administratör, som backup om du inte är tillgänglig
+
+Behörigheten kontrolleras i edge-funktionen mot tabellen `app_admins`; att
+knappen döljs för andra är bara bekvämlighet, inte skyddet.
+
 ## Säkerhet i korthet
 
 - Registrering avstängd – endast inbjudna konton kan logga in.

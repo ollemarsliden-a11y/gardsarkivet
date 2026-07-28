@@ -226,6 +226,14 @@ dialog h2 {
 }
 .comment-del:hover { color: var(--varning); }
 .comment-count { font-size: 0.85rem; color: var(--dis); }
+.admin-badge {
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--sjo);
+  border: 1px solid var(--sjo); border-radius: 999px; padding: 0.1rem 0.45rem;
+  white-space: nowrap;
+}
+.person-actions { display: flex; gap: 0.75rem; }
+#people-form { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
 #comment-form { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
 
 /* Årtal på kortet */

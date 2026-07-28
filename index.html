@@ -43,6 +43,7 @@
       </div>
       <div class="header-actions">
         <span id="user-email" class="user-email"></span>
+        <button id="people-btn" class="btn btn-small" hidden>Personer</button>
         <button id="logout-btn" class="btn btn-small">Logga ut</button>
       </div>
     </header>
@@ -161,6 +162,25 @@
     </div>
   </dialog>
 
-  <script type="module" src="js/app.js?v=9"></script>
+  <!-- Personer (endast administratörer) -->
+  <dialog id="people-dialog">
+    <div class="scan-box">
+      <h2>Personer med tillgång</h2>
+      <p id="people-status" class="status" hidden></p>
+      <div id="people-list" class="comment-list"></div>
+      <form id="people-form">
+        <label for="people-input">Lägg till en person</label>
+        <input type="email" id="people-input" placeholder="namn@exempel.se" required autocomplete="off">
+        <p class="hint">Personen kan sedan logga in med Google eller begära en
+          inloggningslänk själv. Använd samma adress som deras Google-konto.</p>
+        <div class="dialog-actions">
+          <button type="button" id="people-close-btn" class="btn">Stäng</button>
+          <button type="submit" class="btn btn-primary">Ge tillgång</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <script type="module" src="js/app.js?v=10"></script>
 </body>
 </html>

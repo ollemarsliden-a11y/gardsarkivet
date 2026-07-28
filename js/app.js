@@ -42,7 +42,15 @@ function setView(session) {
   if (session) {
     $('user-email').textContent = session.user.email;
     loadDocuments();
+    visaAdminKnapp(session.user.email);
   }
+}
+
+// Personer-knappen visas bara för administratörer. Att dölja den är bara
+// bekvämlighet – edge-funktionen kontrollerar behörigheten på riktigt.
+async function visaAdminKnapp(email) {
+  const { data } = await supabase.from('app_admins').select('email').eq('email', email).maybeSingle();
+  $('people-btn').hidden = !data;
 }
 
 $('login-form').addEventListener('submit', async (e) => {
@@ -331,6 +339,113 @@ $('category-nav').addEventListener('click', (e) => {
   currentCategory = btn.dataset.cat;
   document.querySelectorAll('.cat-btn').forEach((b) => b.classList.toggle('active', b === btn));
   loadDocuments();
+});
+
+// ---------- Personer (administratörer) ----------
+
+async function adminAnrop(action, email) {
+  const { data, error } = await supabase.functions.invoke('admin', { body: { action, email } });
+  if (error) {
+    // Funktionens egna felmeddelanden ligger i svarskroppen, inte i error.message
+    let text = error.message;
+    try { text = (await error.context.json()).error ?? text; } catch { /* behåll */ }
+    throw new Error(text);
+  }
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+
+$('people-btn').addEventListener('click', async () => {
+  $('people-input').value = '';
+  $('people-status').hidden = true;
+  $('people-dialog').showModal();
+  await renderPeople();
+});
+
+$('people-close-btn').addEventListener('click', () => $('people-dialog').close());
+
+async function renderPeople() {
+  const list = $('people-list');
+  list.innerHTML = '';
+  const p = document.createElement('p');
+  p.className = 'empty-msg';
+  p.textContent = 'Hämtar…';
+  list.append(p);
+  try {
+    const { personer } = await adminAnrop('list');
+    list.innerHTML = '';
+    for (const person of personer) {
+      const rad = document.createElement('article');
+      rad.className = 'comment';
+
+      const namn = document.createElement('p');
+      namn.textContent = person.email;
+      if (person.admin) {
+        const märke = document.createElement('span');
+        märke.className = 'admin-badge';
+        märke.textContent = 'administratör';
+        namn.append(' ', märke);
+      }
+
+      const meta = document.createElement('div');
+      meta.className = 'comment-meta';
+      meta.append(person.senast_inloggad
+        ? 'Senast inloggad ' + new Date(person.senast_inloggad).toLocaleDateString('sv-SE')
+        : 'Har inte loggat in ännu');
+
+      if (!person.jag) {
+        const knappar = document.createElement('span');
+        knappar.className = 'person-actions';
+
+        const adminBtn = document.createElement('button');
+        adminBtn.className = 'comment-del';
+        adminBtn.textContent = person.admin ? 'Ta bort admin' : 'Gör till admin';
+        adminBtn.addEventListener('click', async () => {
+          await körPersonÅtgärd(person.admin ? 'unset-admin' : 'set-admin', person.email);
+        });
+
+        const taBort = document.createElement('button');
+        taBort.className = 'comment-del';
+        taBort.textContent = 'Ta bort';
+        taBort.addEventListener('click', async () => {
+          if (!confirm(`Ta bort ${person.email}? Personen förlorar tillgången till arkivet.`)) return;
+          await körPersonÅtgärd('remove', person.email);
+        });
+
+        knappar.append(adminBtn, taBort);
+        meta.append(knappar);
+      }
+
+      rad.append(namn, meta);
+      list.append(rad);
+    }
+  } catch (err) {
+    list.innerHTML = '';
+    showStatus($('people-status'), 'Kunde inte hämta personerna: ' + err.message, true);
+  }
+}
+
+async function körPersonÅtgärd(action, email) {
+  try {
+    await adminAnrop(action, email);
+    $('people-status').hidden = true;
+    await renderPeople();
+  } catch (err) {
+    showStatus($('people-status'), err.message, true);
+  }
+}
+
+$('people-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = $('people-input').value.trim();
+  try {
+    await adminAnrop('add', email);
+    $('people-input').value = '';
+    showStatus($('people-status'), `${email} har nu tillgång. Be dem öppna appen och logga in.`);
+    await renderPeople();
+  } catch (err) {
+    showStatus($('people-status'), err.message, true);
+  }
 });
 
 // ---------- Skanning med kameran ----------
