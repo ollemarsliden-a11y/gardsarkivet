@@ -1,9 +1,9 @@
 // Cachar bara appens eget skal (HTML/CSS/JS/ikoner) så att den startar snabbt
 // och visar något vettigt utan täckning. Dokumenten själva cachas aldrig –
 // de innehåller personuppgifter och ska bara finnas i lagringen.
-const CACHE = 'marsliden-skal-v1';
+const CACHE = 'marsliden-skal-v2';
 const SKAL = ['./', './index.html', './css/style.css', './js/app.js', './js/config.js',
-  './icon-192.png', './icon-512.png', './manifest.json'];
+  './icon-192.png', './icon-512.png', './kultsjon.jpg', './manifest.json'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SKAL)).then(() => self.skipWaiting()));

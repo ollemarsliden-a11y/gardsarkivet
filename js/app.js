@@ -77,6 +77,11 @@ $('google-btn').addEventListener('click', async () => {
 
 $('logout-btn').addEventListener('click', () => supabase.auth.signOut());
 
+for (const id of ['info-btn-login', 'info-btn-main']) {
+  $(id).addEventListener('click', () => $('info-dialog').showModal());
+}
+$('info-close-btn').addEventListener('click', () => $('info-dialog').close());
+
 // ---------- Dokumentlista ----------
 
 async function loadDocuments() {

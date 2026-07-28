@@ -67,6 +67,37 @@ body {
   content: ''; flex: 1; border-top: 1px solid var(--ram);
 }
 
+/* Bilden från Kultsjön – tonas ut nedåt så den smälter in i kortet */
+.hero {
+  display: block;
+  width: calc(100% + 3.5rem);
+  margin: 1.25rem -1.75rem -0.5rem;
+  height: auto;
+  -webkit-mask-image: linear-gradient(to bottom, #000 45%, rgba(0,0,0,0.35) 78%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 45%, rgba(0,0,0,0.35) 78%, transparent 100%);
+}
+
+/* Textlänk som ser ut som en länk men beter sig som en knapp */
+.lank-btn {
+  background: none; border: none; padding: 0;
+  font: inherit; font-size: 0.85rem;
+  color: var(--sjo); text-decoration: underline; cursor: pointer;
+}
+.lank-btn:hover { color: var(--sjo-mork); }
+
+.app-footer {
+  margin: 2rem 0 1rem; padding-top: 1rem;
+  border-top: 1px solid var(--ram); text-align: center;
+}
+
+/* Informationssidan */
+.info-box h3 {
+  font-size: 1rem; margin: 1.25rem 0 0.35rem; color: var(--sjo-mork);
+}
+.info-box h3:first-of-type { margin-top: 0.75rem; }
+.info-box p { margin: 0 0 0.6rem; font-size: 0.95rem; }
+#info-dialog { max-height: 85vh; overflow-y: auto; }
+
 /* Formulärelement */
 input, select, textarea {
   font: inherit;

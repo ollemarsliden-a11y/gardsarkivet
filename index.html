@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="icon" href="icon-192.png">
-  <link rel="stylesheet" href="css/style.css?v=5">
+  <link rel="stylesheet" href="css/style.css?v=6">
 </head>
 <body>
   <!-- Inloggningsvy -->
@@ -19,6 +19,8 @@
     <div class="login-box">
       <h1 class="wordmark">Marsliden <span class="beteckning">1:10</span></h1>
       <p class="tagline">Gårdsarkivet · Kultsjödalen</p>
+      <img class="hero" src="kultsjon.jpg" width="1600" height="593"
+        alt="Kultsjön en stilla höstdag, med båten uppdragen på sandstranden och fjället speglat i vattnet.">
       <form id="login-form">
         <label for="email">Din e-postadress</label>
         <input type="email" id="email" placeholder="namn@exempel.se" required autocomplete="email">
@@ -31,6 +33,7 @@
         Logga in med Google
       </button>
       <p class="hint">Du får ett mejl med en länk – klicka på den så är du inloggad. Inget lösenord behövs. Endast inbjudna kan logga in.</p>
+      <button id="info-btn-login" class="lank-btn">Så hanteras arkivet och dina uppgifter</button>
     </div>
   </section>
 
@@ -88,7 +91,68 @@
     <div id="doc-list" class="doc-list">
       <p class="empty-msg">Laddar…</p>
     </div>
+
+    <footer class="app-footer">
+      <button id="info-btn-main" class="lank-btn">Så hanteras arkivet och dina uppgifter</button>
+    </footer>
   </section>
+
+  <!-- Information om säkerhet och personuppgifter -->
+  <dialog id="info-dialog">
+    <div class="info-box">
+      <h2>Så hanteras arkivet och dina uppgifter</h2>
+
+      <h3>Vem kan se innehållet?</h3>
+      <p>Bara de personer som uttryckligen fått tillgång av en administratör.
+        Det går inte att skapa ett konto själv, och det finns ingen delningslänk
+        eller offentlig sida – ett dokument kan alltså inte råka bli publikt.
+        Vem som helst som försöker öppna appen utan inbjudan möts av inloggningen
+        och kommer inte längre.</p>
+
+      <h3>Vad händer när jag loggar in med Google?</h3>
+      <p>Appen får veta din e-postadress och ingenting annat. Ditt lösenord
+        hanteras av Google och syns aldrig för appen eller för den som förvaltar
+        arkivet. Appen får <strong>ingen</strong> åtkomst till din Gmail, dina
+        kontakter, din kalender eller några andra Google-tjänster, och kan inte
+        skriva eller läsa något åt dig. Google ser att du loggat in i den här
+        appen, precis som när du loggar in någon annanstans med ditt konto.</p>
+      <p>Föredrar du att inte använda Google går det lika bra att få en
+        inloggningslänk skickad till din e-post. Resultatet blir detsamma.</p>
+
+      <h3>Var ligger dokumenten?</h3>
+      <p>Filerna lagras hos Cloudflare i EU och uppgifterna om dem hos Supabase
+        i Stockholm. Allt skickas krypterat, och filerna ligger skyddade – varje
+        gång någon öppnar ett dokument skapas en tillfällig länk som slutar
+        fungera efter tio minuter och bara fungerar för den som är inloggad.</p>
+
+      <h3>Vilka uppgifter sparas om mig?</h3>
+      <p>Din e-postadress, när du senast loggade in, och vilka dokument du laddat
+        upp eller kommenterat. Dokumenten själva kan innehålla personuppgifter –
+        namn, adresser och liknande i köpekontrakt, servitut och gåvobrev – och
+        gamla foton kan föreställa släktingar. Det är hela poängen med arkivet,
+        men det är också därför det är stängt för utomstående.</p>
+
+      <h3>Dina rättigheter</h3>
+      <p>Du har rätt att få veta vad som sparas om dig, att få felaktiga
+        uppgifter rättade, och att få ditt konto borttaget. Säg till en
+        administratör så ordnas det. Vill du att ett dokument eller ett foto som
+        rör dig tas bort, hör av dig – det tas bort om det inte behövs för
+        förvaltningen av fastigheten.</p>
+
+      <h3>Ett par vänliga råd</h3>
+      <p>Lås din telefon med kod eller fingeravtryck, och slå gärna på
+        tvåstegsverifiering för din e-post. Den som kommer åt din e-post kan
+        annars begära en inloggningslänk i ditt namn. Ladda inte heller upp
+        känsligare uppgifter än vad förvaltningen kräver.</p>
+
+      <p class="hint" id="info-kontakt">Ansvarig för arkivet: <strong>Olle</strong>
+        (marsliden1.10@gmail.com). Hör av dig med frågor, stort som smått.</p>
+
+      <div class="dialog-actions">
+        <button type="button" id="info-close-btn" class="btn btn-primary">Stäng</button>
+      </div>
+    </div>
+  </dialog>
 
   <!-- Uppladdningsdialog -->
   <dialog id="upload-dialog">
@@ -181,6 +245,6 @@
     </div>
   </dialog>
 
-  <script type="module" src="js/app.js?v=11"></script>
+  <script type="module" src="js/app.js?v=12"></script>
 </body>
 </html>
