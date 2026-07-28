@@ -246,13 +246,18 @@ function loadScanLibs() {
 
 $('scan-btn').addEventListener('click', () => $('scan-input').click());
 
+let scanStage = 'adjust'; // 'adjust' = dra i hörnen, 'preview' = färdigt resultat
+let cropCorners = null;   // fyra hörn i originalbildens koordinater
+const CORNER_KEYS = ['topLeftCorner', 'topRightCorner', 'bottomRightCorner', 'bottomLeftCorner'];
+
 $('scan-input').addEventListener('change', async () => {
   const file = $('scan-input').files[0];
   if (!file) return;
   $('scan-dialog').showModal();
   $('scan-preview').hidden = true;
-  $('scan-retake-btn').hidden = true;
-  $('scan-accept-btn').hidden = true;
+  for (const id of ['scan-retake-btn', 'scan-back-btn', 'scan-continue-btn', 'scan-accept-btn']) {
+    $(id).hidden = true;
+  }
   showStatus($('scan-status'), 'Bearbetar bilden – första gången kan det ta en liten stund…');
   try {
     await loadScanLibs();
@@ -260,7 +265,8 @@ $('scan-input').addEventListener('change', async () => {
     img.src = URL.createObjectURL(file);
     await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
     scanSourceImg = img;
-    renderScan(img);
+    cropCorners = detectPaper(img)?.corners ?? cannyCorners(img) ?? defaultCorners(img);
+    enterAdjustStage();
   } catch (err) {
     showStatus($('scan-status'), 'Fel vid bearbetning: ' + (err.message ?? err), true);
   }
@@ -294,58 +300,198 @@ function detectPaper(img) {
   }
 }
 
+// Kraftfullare kantletning (Canny) för när jscanify inte hittar något –
+// klarar svagare kontrast, t.ex. vitt papper på ljust bord.
+function cannyCorners(img) {
+  try {
+    const c = document.createElement('canvas');
+    c.width = img.width;
+    c.height = img.height;
+    c.getContext('2d').drawImage(img, 0, 0);
+    const src = cv.imread(c);
+    const gray = new cv.Mat();
+    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+    cv.GaussianBlur(gray, gray, new cv.Size(5, 5), 0);
+    const edges = new cv.Mat();
+    cv.Canny(gray, edges, 50, 150);
+    const kernel = cv.Mat.ones(3, 3, cv.CV_8U);
+    cv.dilate(edges, edges, kernel);
+    const contours = new cv.MatVector();
+    const hier = new cv.Mat();
+    cv.findContours(edges, contours, hier, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+    let best = null;
+    let bestArea = 0.06 * img.width * img.height;
+    for (let i = 0; i < contours.size(); i++) {
+      const cnt = contours.get(i);
+      const area = cv.contourArea(cnt);
+      if (area > bestArea) {
+        const approx = new cv.Mat();
+        cv.approxPolyDP(cnt, approx, 0.02 * cv.arcLength(cnt, true), true);
+        if (approx.rows === 4) {
+          best = [];
+          for (let j = 0; j < 4; j++) best.push({ x: approx.data32S[j * 2], y: approx.data32S[j * 2 + 1] });
+          bestArea = area;
+        }
+        approx.delete();
+      }
+      cnt.delete();
+    }
+    src.delete(); gray.delete(); edges.delete(); kernel.delete(); contours.delete(); hier.delete();
+    return best ? orderCorners(best) : null;
+  } catch {
+    return null;
+  }
+}
+
+function orderCorners(pts) {
+  const bySum = [...pts].sort((a, b) => (a.x + a.y) - (b.x + b.y));
+  const byDiff = [...pts].sort((a, b) => (a.x - a.y) - (b.x - b.y));
+  return {
+    topLeftCorner: bySum[0], bottomRightCorner: bySum[3],
+    topRightCorner: byDiff[3], bottomLeftCorner: byDiff[0],
+  };
+}
+
+function defaultCorners(img) {
+  const mx = img.width * 0.08, my = img.height * 0.08;
+  return {
+    topLeftCorner: { x: mx, y: my },
+    topRightCorner: { x: img.width - mx, y: my },
+    bottomRightCorner: { x: img.width - mx, y: img.height - my },
+    bottomLeftCorner: { x: mx, y: img.height - my },
+  };
+}
+
+// ----- Steg 1: justera hörnen -----
+
+let adjustScale = 1;
+
+function enterAdjustStage() {
+  scanStage = 'adjust';
+  $('scan-accept-btn').hidden = true;
+  $('scan-back-btn').hidden = true;
+  $('scan-retake-btn').hidden = false;
+  $('scan-continue-btn').hidden = false;
+  $('scan-preview').hidden = false;
+  drawAdjust();
+  showStatus($('scan-status'), 'Dra i hörnen så att den blå ramen följer kanterna. Tryck sedan på Beskär.');
+}
+
+function drawAdjust() {
+  const img = scanSourceImg;
+  const canvas = $('scan-preview');
+  const ctx = canvas.getContext('2d');
+  adjustScale = Math.min(1, 1200 / Math.max(img.width, img.height));
+  canvas.width = Math.round(img.width * adjustScale);
+  canvas.height = Math.round(img.height * adjustScale);
+  ctx.filter = 'none';
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  const pts = CORNER_KEYS.map((k) => ({ x: cropCorners[k].x * adjustScale, y: cropCorners[k].y * adjustScale }));
+  ctx.strokeStyle = '#1d5b8f';
+  ctx.lineWidth = Math.max(2, canvas.width / 250);
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < 4; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(29, 91, 143, 0.35)';
+  for (const p of pts) {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, Math.max(12, canvas.width / 45), 0, 7);
+    ctx.fill();
+    ctx.stroke();
+  }
+}
+
+let dragCorner = null;
+
+function pointerToCanvas(e) {
+  const canvas = $('scan-preview');
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (e.clientX - rect.left) * canvas.width / rect.width,
+    y: (e.clientY - rect.top) * canvas.height / rect.height,
+  };
+}
+
+$('scan-preview').addEventListener('pointerdown', (e) => {
+  if (scanStage !== 'adjust' || !cropCorners) return;
+  const p = pointerToCanvas(e);
+  const grabRadius = Math.max(40, $('scan-preview').width / 15);
+  let best = null, bestD = grabRadius;
+  for (const k of CORNER_KEYS) {
+    const d = Math.hypot(cropCorners[k].x * adjustScale - p.x, cropCorners[k].y * adjustScale - p.y);
+    if (d < bestD) { best = k; bestD = d; }
+  }
+  if (best) {
+    dragCorner = best;
+    $('scan-preview').setPointerCapture(e.pointerId);
+    e.preventDefault();
+  }
+});
+
+$('scan-preview').addEventListener('pointermove', (e) => {
+  if (!dragCorner) return;
+  const p = pointerToCanvas(e);
+  const img = scanSourceImg;
+  cropCorners[dragCorner] = {
+    x: Math.min(img.width, Math.max(0, p.x / adjustScale)),
+    y: Math.min(img.height, Math.max(0, p.y / adjustScale)),
+  };
+  drawAdjust();
+});
+
+$('scan-preview').addEventListener('pointerup', () => { dragCorner = null; });
+
+// ----- Steg 2: färdigbehandlat resultat -----
+
+function enterPreviewStage() {
+  scanStage = 'preview';
+  $('scan-continue-btn').hidden = true;
+  $('scan-retake-btn').hidden = false;
+  $('scan-back-btn').hidden = false;
+  $('scan-accept-btn').hidden = false;
+  renderScan(scanSourceImg);
+}
+
 function renderScan(img) {
   const canvas = $('scan-preview');
   const ctx = canvas.getContext('2d');
-
-  const detected = detectPaper(img);
+  const c = cropCorners;
 
   if (scanMode === 'doc') {
     // Räta upp till A4-proportioner (150 dpi), svartvitt med hög kontrast
     const W = 1240, H = 1754;
-    const source = detected
-      ? new jscanify().extractPaper(img, W, H, detected.corners)
-      : img;
+    const source = new jscanify().extractPaper(img, W, H, c);
     canvas.width = W;
     canvas.height = H;
     ctx.filter = 'grayscale(1) contrast(1.5) brightness(1.08)';
     ctx.drawImage(source, 0, 0, W, H);
     ctx.filter = 'none';
-    showStatus($('scan-status'), detected
-      ? 'Kolla att texten är läsbar. Blev det fel – ta om bilden med mer ljus och rakare vinkel.'
-      : 'Hittade inga tydliga papperskanter, så hela bilden används. Mörk bakgrund bakom pappret hjälper.');
+    showStatus($('scan-status'), 'Kolla att texten är läsbar. Behöver ramen flyttas – tryck på Justera hörnen.');
   } else {
-    // Fotoläge: samma kantbeskärning men i färg, och fotots egna proportioner
-    if (detected) {
-      const c = detected.corners;
-      const w = Math.round((dist(c.topLeftCorner, c.topRightCorner) + dist(c.bottomLeftCorner, c.bottomRightCorner)) / 2);
-      const h = Math.round((dist(c.topLeftCorner, c.bottomLeftCorner) + dist(c.topRightCorner, c.bottomRightCorner)) / 2);
-      const scale = Math.min(1, 2000 / Math.max(w, h));
-      canvas.width = Math.round(w * scale);
-      canvas.height = Math.round(h * scale);
-      const source = new jscanify().extractPaper(img, canvas.width, canvas.height, c);
-      ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
-      showStatus($('scan-status'), 'Fotot är beskuret och sparas i färg. Ser kanterna fel ut – ta om mot en avvikande bakgrund.');
-    } else {
-      const scale = Math.min(1, 2000 / Math.max(img.width, img.height));
-      canvas.width = Math.round(img.width * scale);
-      canvas.height = Math.round(img.height * scale);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      showStatus($('scan-status'), 'Hittade inga tydliga kanter, så hela bilden sparas som den är – i färg.');
-    }
+    // Fotoläge: samma beskärning men i färg och med fotots egna proportioner
+    const w = Math.round((dist(c.topLeftCorner, c.topRightCorner) + dist(c.bottomLeftCorner, c.bottomRightCorner)) / 2);
+    const h = Math.round((dist(c.topLeftCorner, c.bottomLeftCorner) + dist(c.topRightCorner, c.bottomRightCorner)) / 2);
+    const scale = Math.min(1, 2000 / Math.max(w, h));
+    canvas.width = Math.round(w * scale);
+    canvas.height = Math.round(h * scale);
+    const source = new jscanify().extractPaper(img, canvas.width, canvas.height, c);
+    ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+    showStatus($('scan-status'), 'Fotot sparas i färg, beskuret enligt ramen. Behöver den flyttas – tryck på Justera hörnen.');
   }
-
   canvas.hidden = false;
-  $('scan-retake-btn').hidden = false;
-  $('scan-accept-btn').hidden = false;
 }
+
+$('scan-continue-btn').addEventListener('click', enterPreviewStage);
+$('scan-back-btn').addEventListener('click', enterAdjustStage);
 
 for (const [btnId, mode] of [['mode-doc-btn', 'doc'], ['mode-photo-btn', 'photo']]) {
   $(btnId).addEventListener('click', () => {
     scanMode = mode;
     $('mode-doc-btn').classList.toggle('active', mode === 'doc');
     $('mode-photo-btn').classList.toggle('active', mode === 'photo');
-    if (scanSourceImg) renderScan(scanSourceImg);
+    if (scanSourceImg && scanStage === 'preview') renderScan(scanSourceImg);
   });
 }
 

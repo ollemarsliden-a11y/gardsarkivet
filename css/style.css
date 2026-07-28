@@ -194,6 +194,7 @@ dialog h2 {
 .scan-preview {
   max-width: 100%; max-height: 52vh; object-fit: contain;
   border: 1px solid var(--ram); border-radius: 9px; align-self: center;
+  touch-action: none; /* så att hörndragning inte scrollar sidan på mobil */
 }
 
 /* Status */
