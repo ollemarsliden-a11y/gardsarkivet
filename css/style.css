@@ -67,14 +67,14 @@ body {
   content: ''; flex: 1; border-top: 1px solid var(--ram);
 }
 
-/* Bilden från Kultsjön – tonas ut nedåt så den smälter in i kortet */
+/* Bilden från Kultsjön – går kant i kant och tonas ut nedåt mot bakgrunden */
 .hero {
   display: block;
-  width: calc(100% + 3.5rem);
-  margin: 1.25rem -1.75rem -0.5rem;
+  width: calc(100% + 2rem);
+  margin: 0.35rem -1rem 0.15rem;
   height: auto;
-  -webkit-mask-image: linear-gradient(to bottom, #000 45%, rgba(0,0,0,0.35) 78%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 45%, rgba(0,0,0,0.35) 78%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 42%, rgba(0,0,0,0.3) 76%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 42%, rgba(0,0,0,0.3) 76%, transparent 100%);
 }
 
 /* Textlänk som ser ut som en länk men beter sig som en knapp */
