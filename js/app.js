@@ -370,6 +370,7 @@ function enterAdjustStage() {
   scanStage = 'adjust';
   $('scan-accept-btn').hidden = true;
   $('scan-back-btn').hidden = true;
+  $('sharpen-row').hidden = true;
   $('scan-retake-btn').hidden = false;
   $('scan-continue-btn').hidden = false;
   $('scan-preview').hidden = false;
@@ -451,7 +452,21 @@ function enterPreviewStage() {
   $('scan-retake-btn').hidden = false;
   $('scan-back-btn').hidden = false;
   $('scan-accept-btn').hidden = false;
+  $('sharpen-row').hidden = false;
   renderScan(scanSourceImg);
+}
+
+// Oskarp mask: skärper genom att dra bort en suddig kopia, plus lätt kontrastlyft.
+// Räddar inte riktigt oskarpa bilder, men lyfter mjuka/matta original tydligt.
+function enhanceCanvas(canvas) {
+  const src = cv.imread(canvas);
+  const blur = new cv.Mat();
+  cv.GaussianBlur(src, blur, new cv.Size(0, 0), 3);
+  const dst = new cv.Mat();
+  cv.addWeighted(src, 1.6, blur, -0.6, 0, dst);
+  dst.convertTo(dst, -1, 1.06, 3);
+  cv.imshow(canvas, dst);
+  src.delete(); blur.delete(); dst.delete();
 }
 
 function renderScan(img) {
@@ -480,8 +495,13 @@ function renderScan(img) {
     ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
     showStatus($('scan-status'), 'Fotot sparas i färg, beskuret enligt ramen. Behöver den flyttas – tryck på Justera hörnen.');
   }
+  if ($('sharpen-check').checked) enhanceCanvas(canvas);
   canvas.hidden = false;
 }
+
+$('sharpen-check').addEventListener('change', () => {
+  if (scanSourceImg && scanStage === 'preview') renderScan(scanSourceImg);
+});
 
 $('scan-continue-btn').addEventListener('click', enterPreviewStage);
 $('scan-back-btn').addEventListener('click', enterAdjustStage);
