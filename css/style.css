@@ -46,6 +46,13 @@ body {
   color: var(--dis);
   margin: 0.15rem 0 0;
 }
+/* Längre, beskrivande variant – versaler och spärrad text blir tungt att läsa */
+.tagline-lang {
+  font-size: 0.95rem;
+  letter-spacing: 0;
+  text-transform: none;
+  margin-top: 0.4rem;
+}
 
 /* Inloggning */
 .login-box {
