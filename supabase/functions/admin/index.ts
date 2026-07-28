@@ -38,6 +38,15 @@ Deno.serve(async (req) => {
       if (error) throw error;
       const { data: admins } = await admin.from('app_admins').select('email');
       const adminEposter = new Set((admins ?? []).map((a) => a.email));
+
+      // Aktiva sessioner – kräver etapp5-uppdateringen, saknas den visas bara
+      // ingen sessionsinfo istället för att hela listan slutar fungera.
+      const sessioner = new Map<string, { antal: number; senast: string }>();
+      const { data: rader } = await admin.rpc('aktiva_sessioner');
+      for (const rad of rader ?? []) {
+        sessioner.set(rad.user_id, { antal: Number(rad.antal), senast: rad.senast });
+      }
+
       return json({
         personer: data.users.map((u) => ({
           id: u.id,
@@ -45,8 +54,20 @@ Deno.serve(async (req) => {
           senast_inloggad: u.last_sign_in_at,
           admin: adminEposter.has(u.email ?? ''),
           jag: u.email === user.email,
+          sessioner: sessioner.get(u.id)?.antal ?? 0,
+          senast_aktiv: sessioner.get(u.id)?.senast ?? null,
         })).sort((a, b) => (a.email ?? '').localeCompare(b.email ?? '', 'sv')),
       });
+    }
+
+    if (action === 'logout') {
+      const { data: users, error } = await admin.auth.admin.listUsers({ perPage: 200 });
+      if (error) throw error;
+      const träff = users.users.find((u) => u.email === epost);
+      if (!träff) return json({ error: 'Hittade ingen med den adressen' }, 404);
+      const { data: antal, error: rpcError } = await admin.rpc('avsluta_sessioner', { mal: träff.id });
+      if (rpcError) return json({ error: 'Kunde inte logga ut: ' + rpcError.message }, 500);
+      return json({ ok: true, antal });
     }
 
     if (action === 'add') {

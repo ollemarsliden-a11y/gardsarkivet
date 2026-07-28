@@ -120,6 +120,9 @@ Administratörer ser knappen **Personer** i appens huvudvy och kan där:
   personen loggar in med Google eller begär en inloggningslänk själv)
 - ta bort en person
 - göra någon annan till administratör, som backup om du inte är tillgänglig
+- se vem som är inloggad just nu, på hur många enheter, och när de senast var aktiva
+- logga ut någon från alla enheter utan att ta bort deras tillgång
+  (kräver `supabase/etapp5-sessioner.sql`)
 
 Behörigheten kontrolleras i edge-funktionen mot tabellen `app_admins`; att
 knappen döljs för andra är bara bekvämlighet, inte skyddet.

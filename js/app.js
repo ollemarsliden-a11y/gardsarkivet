@@ -387,15 +387,41 @@ async function renderPeople() {
         namn.append(' ', märke);
       }
 
+      if (person.sessioner > 0) {
+        const status = document.createElement('span');
+        status.className = 'session-badge';
+        status.textContent = person.sessioner === 1
+          ? 'inloggad på 1 enhet'
+          : `inloggad på ${person.sessioner} enheter`;
+        namn.append(' ', status);
+      }
+
       const meta = document.createElement('div');
       meta.className = 'comment-meta';
-      meta.append(person.senast_inloggad
-        ? 'Senast inloggad ' + new Date(person.senast_inloggad).toLocaleDateString('sv-SE')
-        : 'Har inte loggat in ännu');
+      const info = document.createElement('span');
+      if (person.senast_aktiv) {
+        info.textContent = 'Senast aktiv ' + new Date(person.senast_aktiv).toLocaleDateString('sv-SE');
+      } else if (person.senast_inloggad) {
+        info.textContent = 'Senast inloggad ' + new Date(person.senast_inloggad).toLocaleDateString('sv-SE');
+      } else {
+        info.textContent = 'Har inte loggat in ännu';
+      }
+      meta.append(info);
 
       if (!person.jag) {
         const knappar = document.createElement('span');
         knappar.className = 'person-actions';
+
+        if (person.sessioner > 0) {
+          const utBtn = document.createElement('button');
+          utBtn.className = 'comment-del';
+          utBtn.textContent = 'Logga ut';
+          utBtn.addEventListener('click', async () => {
+            if (!confirm(`Logga ut ${person.email} från alla enheter? Personen behåller sin tillgång och kan logga in igen.`)) return;
+            await körPersonÅtgärd('logout', person.email);
+          });
+          knappar.append(utBtn);
+        }
 
         const adminBtn = document.createElement('button');
         adminBtn.className = 'comment-del';
@@ -427,8 +453,13 @@ async function renderPeople() {
 
 async function körPersonÅtgärd(action, email) {
   try {
-    await adminAnrop(action, email);
-    $('people-status').hidden = true;
+    const svar = await adminAnrop(action, email);
+    if (action === 'logout') {
+      showStatus($('people-status'),
+        `${email} är utloggad. Åtkomsten kan dröja upp till en timme innan den bryts helt på en enhet som redan har appen öppen.`);
+    } else {
+      $('people-status').hidden = true;
+    }
     await renderPeople();
   } catch (err) {
     showStatus($('people-status'), err.message, true);
